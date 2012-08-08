@@ -38,6 +38,7 @@
 		DEAED95C15D1DA5100347A93 /* structures.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = structures.h; sourceTree = "<group>"; };
 		DEAED95D15D27AF900347A93 /* hashing.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = hashing.c; sourceTree = "<group>"; };
 		DEAED95E15D27AF900347A93 /* hashing.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = hashing.h; sourceTree = "<group>"; };
+		DEAED96015D2C39500347A93 /* README */ = {isa = PBXFileReference; lastKnownFileType = text; path = README; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -54,6 +55,7 @@
 		DEAED93815D1CBF200347A93 = {
 			isa = PBXGroup;
 			children = (
+				DEAED96015D2C39500347A93 /* README */,
 				DEAED94615D1CBF300347A93 /* hash_symbols */,
 				DEAED94415D1CBF300347A93 /* Products */,
 			);

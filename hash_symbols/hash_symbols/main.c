@@ -45,6 +45,7 @@
 #include <mach-o/fat.h>
 #include <getopt.h>
 #include <string.h>
+#include <sys/stat.h>
 
 #include "file_operations.h"
 #include "process.h"
@@ -156,7 +157,13 @@ int main (int argc, char *argv[])
         exit(1);
     }
     
-    // FIXME: test if output folder exists
+    // test if output folder exists
+    struct stat s;
+    if (stat(options.outputFolder, &s) != 0)
+    {
+        fprintf(stderr, "[ERROR] Output folder does not exist!\n");
+        exit(1);
+    }
     
     // read the target into our buffer
     uint8_t *targetBuffer   = NULL;

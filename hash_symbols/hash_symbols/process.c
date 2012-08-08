@@ -150,13 +150,15 @@ process_nonfat_binary(uint8_t **targetBuffer)
         
         // open the file to write, finally!
         outputFile = fopen(outputName, "w+");
+        free(outputExtensionName);
+        free(outputName);
     }
     
     // start the fun!
     if (header_info.is64Bits)
     {
         nlist64 = (struct nlist_64*)(address + header_info.symtab_symoff);
-        char *symbolString;
+        char *symbolString = NULL;
 
         for (uint32_t x = 0; x < header_info.symtab_nsyms; x++)
         {
