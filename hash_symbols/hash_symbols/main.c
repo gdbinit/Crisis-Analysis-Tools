@@ -159,7 +159,7 @@ int main (int argc, char *argv[])
     
     // test if output folder exists
     struct stat s;
-    if (stat(options.outputFolder, &s) != 0)
+    if (options.outputFolder != NULL && stat(options.outputFolder, &s) != 0)
     {
         fprintf(stderr, "[ERROR] Output folder does not exist!\n");
         exit(1);
