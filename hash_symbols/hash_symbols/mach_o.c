@@ -78,9 +78,7 @@ process_macho_header(uint8_t **targetBuffer)
                 break;
             default:
                 break;
-        }
-        if (mach_header->cputype == CPU_TYPE_X86)
-            
+        }            
         // first load cmd address
         address = address + sizeof(struct mach_header);
     }
