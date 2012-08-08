@@ -65,7 +65,7 @@ help(const char *exe)
     printf("Usage Syntax:\n");
     printf("%s target [<options>]\n\n", exe);
     printf("where:\n");
-    printf("target - target binary read symbols from\n");
+    printf("target - target binary to read symbols from\n");
     printf("and options:\n");
     printf("-a: specific target architecture to hash symbols from if target is a fat archive\n");
     printf("    valid options are i386, x86_64, armv6, armv7\n");

@@ -114,7 +114,7 @@ process_nonfat_binary(uint8_t **targetBuffer)
 
     // generate hash if we want to find a specific symbol
     uint32_t symbolToMatchHash = 0;
-    FILE *outputFile;
+    FILE *outputFile = NULL;
     if (options.symbol != NULL)
     {
         symbolToMatchHash = FNV1A_Hash_Jesteress(options.symbol, strlen(options.symbol));
@@ -185,7 +185,7 @@ process_nonfat_binary(uint8_t **targetBuffer)
     else
     {
         nlist = (struct nlist*)(address + header_info.symtab_symoff);
-        char *symbolString;
+        char *symbolString = NULL;
         
         for (uint32_t x = 0; x < header_info.symtab_nsyms; x++)
         {

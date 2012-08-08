@@ -1,0 +1,38 @@
+   ___ ___               .__                       
+  /   |   \_____    _____|  |__                    
+ /    ~    \__  \  /  ___/  |  \                   
+ \    Y    // __ \_\___ \|   Y  \                  
+  \___|_  /(____  /____  >___|  /                  
+        \/      \/     \/     \/                   
+   _________            ___.          .__          
+  /   _____/__.__. _____\_ |__   ____ |  |   ______
+  \_____  <   |  |/     \| __ \ /  _ \|  |  /  ___/
+  /        \___  |  Y Y  \ \_\ (  <_> )  |__\___ \ 
+ /_______  / ____|__|_|  /___  /\____/|____/____  >
+         \/\/          \/    \/                 \/ 
+ v0.1
+ 
+(c) 2012, fG! - reverser@put.as - http://reverse.put.as
+ 
+This is a command line util to hash the exported symbol names of a given Mach-O binary or library.
+
+You can modify the hashing algorithm by modifying the hash_string() function at hashing.c.
+The default hash is the one used by OS.X/Crisis malware.
+
+It is able to process non-fat and fat binaries. For now it supports x86, x86_64, ARM binaries.
+
+By default it will write a text file with format "symbol_name,hash", which can be used by the
+IDC scripts available at https://github.com/gdbinit/Crisis-Analysis-Tools.
+
+The output folder by default is the current directory and can be modified with the -o option.
+If target is a fat binary you can extract only a single arch using the -a option.
+
+It's also possible to hash a single symbol by using the -s option. Don't forget you need to input
+the symbol name with the leading underscore.
+
+Bug reports, fixes and patches are welcome: reverser@put.as 
+or https://github.com/gdbinit/Crisis-Analysis-Tools
+
+That's it! Enjoy :-)
+
+fG!
