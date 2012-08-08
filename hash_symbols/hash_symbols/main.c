@@ -43,25 +43,44 @@
 #include <stdint.h>
 #include <mach-o/loader.h>
 #include <mach-o/fat.h>
+#include <getopt.h>
+#include <string.h>
 
 #include "file_operations.h"
 #include "process.h"
+#include "structures.h"
 
 #define VERSION "0.1"
 
-static void help(void);
+static void help(const char *exe);
+static void init_options(options_t *options);
+
+options_t options;
 
 static void
-help(void)
+help(const char *exe)
 {
     printf("\n");
     printf("Usage Syntax:\n");
-    printf("hash_symbols target\n\n");
+    printf("%s target [<options>]\n\n", exe);
     printf("where:\n");
     printf("target - target binary read symbols from\n");
+    printf("and options:\n");
+    printf("-a: specific target architecture to hash symbols from if fat archive\n");
+    printf("    valid options are i386, x86_64, ppc, ppc64, armv6, armv7\n");
+    printf("-s: specific symbol name to hash\n");
+    printf("-o: output folder, default is current path\n");
 }
 
-int main (int argc, const char * argv[])
+static void 
+init_options(options_t *options)
+{
+    options->arch = 0;
+    options->outputFolder = NULL;
+    options->symbol = NULL;
+}
+
+int main (int argc, char *argv[])
 {
     printf(" _____         _      _____           _       _     \n");
     printf("|  |  |___ ___| |_   |   __|_ _ _____| |_ ___| |___ \n");
@@ -73,10 +92,80 @@ int main (int argc, const char * argv[])
     printf("|        (c) fG!, 2012 - reverser@put.as         |\n");
     printf("`------------------------------------------------´\n");
 
+    // required structure for long options
+	static struct option long_options[]={
+        { "arch",   no_argument, NULL, 'a' },
+        { "symbol", no_argument, NULL, 's' },
+        { "output", no_argument, NULL, 'o' },
+        { "help",   no_argument, NULL, 'h' },
+		{ NULL, 0, NULL, 0 }
+	};
+	int option_index = 0;
+    int c = 0;
+    
+    init_options(&options);
+    const char *myProgramName = argv[0];
+
+    // process command line options
+	while ((c = getopt_long(argc, argv, "a:s:o:h", long_options, &option_index)) != -1)
+	{
+		switch (c)
+		{
+			case ':':
+			case '?':
+            case 'h':
+				help(myProgramName);
+				exit(1);
+				break;
+            case 'a':
+            {
+                if (strcmp(optarg, "i386") == 0)
+                    options.arch = X86;
+                else if (strcmp(optarg, "x86_64") == 0)
+                    options.arch = X86_64;
+                else if (strcmp(optarg, "ppc") == 0)
+                    options.arch = PPC;
+                else if (strcmp(optarg, "ppc64") == 0)
+                    options.arch = PPC64;
+                else if (strcmp(optarg, "armv6") == 0)
+                    options.arch = ARMV6;
+                else if (strcmp(optarg, "armv7") == 0)
+                    options.arch = ARMV7;
+                else
+                {
+                    help(myProgramName);
+                    exit(1);
+                }
+                break;
+            }
+            case 's':
+                options.symbol = optarg;
+                break;
+            case 'o':
+                options.outputFolder = optarg;
+                break;
+			default:
+				help(myProgramName);
+				exit(1);
+		}
+	}
+    
+    // switches are set but there's no target configured
+    if ((argv+optind)[0] == NULL)
+    {
+        fprintf(stderr, "*******************************\n");
+        fprintf(stderr, "[ERROR] Target binary required!\n");
+        fprintf(stderr, "*******************************\n");
+        help(myProgramName);
+        exit(1);
+    }
+    
+    // FIXME: test if output folder exists
+    
     // read the target into our buffer
     uint8_t *targetBuffer   = NULL;
     uint32_t fileSize       = 0;
-    fileSize = read_target(&targetBuffer, argv[1]);
+    fileSize = read_target(&targetBuffer, (argv+optind)[0]);
     
     // verify if it's a valid mach-o target
     uint8_t isFat = 0;

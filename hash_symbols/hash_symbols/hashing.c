@@ -43,7 +43,7 @@
 int32_t
 hash_string(char *string_to_hash)
 {
-    int32_t x = strlen(string_to_hash);
+    int32_t x = (uint32_t)strlen(string_to_hash);
 	int32_t hash_value = 0;
     
 	for (uint32_t i = 0; i < x; i++) 

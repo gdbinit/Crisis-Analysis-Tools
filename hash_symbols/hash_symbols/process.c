@@ -40,6 +40,8 @@
 #include <mach-o/nlist.h>
 #include <arpa/inet.h>
 
+extern options_t options;
+
 /*
  * process fat archives
  * we just find out how many binaries are inside the fat archive and call the function to
@@ -58,12 +60,33 @@ process_fat_binary(uint8_t **targetBuffer)
     nrFatArch = ntohl(fatheader_ptr->nfat_arch);
     // pointer to the first fat_arch structure
     struct fat_arch *fatArch = (struct fat_arch*)(address + sizeof(struct fat_header));
-    // iterate thru all fat_archs and process those binaries
-    for (uint32_t i = 0; i < nrFatArch; i++)
+    
+    // if arch is set find the selected arch
+    if (options.arch)
     {
-        uint8_t *location = address + ntohl(fatArch->offset);
-        process_nonfat_binary(&location);
-        fatArch++;
+        // find the correct architecture
+        for (uint32_t i = 0; i < nrFatArch; i++)
+        {
+            // for ARM we need to match cpusubtype!
+            // FIXME: test with a ARM binary
+            if (ntohl(fatArch->cputype) == options.arch || ntohl(fatArch->cpusubtype) == options.arch)
+            {
+                uint8_t *location = address + ntohl(fatArch->offset);
+                process_nonfat_binary(&location);
+                break;
+            }
+            fatArch++;
+        }
+    }
+    // else iterate thru all fat_archs and process those binaries
+    else
+    {
+        for (uint32_t i = 0; i < nrFatArch; i++)
+        {
+            uint8_t *location = address + ntohl(fatArch->offset);
+            process_nonfat_binary(&location);
+            fatArch++;
+        }
     }
     
 }

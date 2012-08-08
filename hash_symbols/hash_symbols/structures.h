@@ -36,6 +36,7 @@
 #define hash_symbols_structures_h
 
 #include <stdint.h>
+#include <mach-o/loader.h>
 
 struct header_info
 {
@@ -51,6 +52,25 @@ struct header_info
     uint32_t dysymtab_iundefsym;
     uint32_t dysymtab_nundefsym;
 };
+
+enum archs
+{
+    X86 = CPU_TYPE_I386,
+    X86_64 = CPU_TYPE_X86_64,
+    PPC = CPU_TYPE_POWERPC,
+    PPC64 = CPU_TYPE_POWERPC64,
+    ARMV6 = CPU_SUBTYPE_ARM_V6,
+    ARMV7 = CPU_SUBTYPE_ARM_V7
+};
+
+struct options
+{
+    enum archs arch;
+    char    *outputFolder;
+    char    *symbol;
+};
+
+typedef struct options options_t;
 
 
 #endif
