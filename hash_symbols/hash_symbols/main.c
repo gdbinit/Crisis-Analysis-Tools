@@ -66,8 +66,8 @@ help(const char *exe)
     printf("where:\n");
     printf("target - target binary read symbols from\n");
     printf("and options:\n");
-    printf("-a: specific target architecture to hash symbols from if fat archive\n");
-    printf("    valid options are i386, x86_64, ppc, ppc64, armv6, armv7\n");
+    printf("-a: specific target architecture to hash symbols from if target is a fat archive\n");
+    printf("    valid options are i386, x86_64, armv6, armv7\n");
     printf("-s: specific symbol name to hash\n");
     printf("-o: output folder, default is current path\n");
 }
@@ -123,10 +123,6 @@ int main (int argc, char *argv[])
                     options.arch = X86;
                 else if (strcmp(optarg, "x86_64") == 0)
                     options.arch = X86_64;
-                else if (strcmp(optarg, "ppc") == 0)
-                    options.arch = PPC;
-                else if (strcmp(optarg, "ppc64") == 0)
-                    options.arch = PPC64;
                 else if (strcmp(optarg, "armv6") == 0)
                     options.arch = ARMV6;
                 else if (strcmp(optarg, "armv7") == 0)
@@ -166,6 +162,7 @@ int main (int argc, char *argv[])
     uint8_t *targetBuffer   = NULL;
     uint32_t fileSize       = 0;
     fileSize = read_target(&targetBuffer, (argv+optind)[0]);
+    options.targetName = (argv+optind)[0];
     
     // verify if it's a valid mach-o target
     uint8_t isFat = 0;
@@ -175,6 +172,11 @@ int main (int argc, char *argv[])
         isFat = 1;
     else if (magic == MH_MAGIC || magic == MH_MAGIC_64)
         isFat = 0;
+    else if (magic == MH_CIGAM || magic == MH_CIGAM_64)
+    {
+        printf("[ERROR] Target is not supported!\n");
+        exit(1);
+    }
     else
     {
 		printf("[ERROR] Target is not a valid Mach-O binary!\n");

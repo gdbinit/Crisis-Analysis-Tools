@@ -65,6 +65,22 @@ process_macho_header(uint8_t **targetBuffer)
     {
         struct mach_header *mach_header = (struct mach_header*)(address);
         nrLoadCmds = mach_header->ncmds;
+        switch (mach_header->cputype) 
+        {
+            case CPU_TYPE_X86:
+                temp_headerinfo.cpuString = "i386";
+                break;
+            case CPU_TYPE_ARM:
+                if (mach_header->cpusubtype == CPU_SUBTYPE_ARM_V6)
+                    temp_headerinfo.cpuString = "armv6";
+                else if (mach_header->cpusubtype == CPU_SUBTYPE_ARM_V7)
+                    temp_headerinfo.cpuString = "armv7";
+                break;
+            default:
+                break;
+        }
+        if (mach_header->cputype == CPU_TYPE_X86)
+            
         // first load cmd address
         address = address + sizeof(struct mach_header);
     }
@@ -73,6 +89,10 @@ process_macho_header(uint8_t **targetBuffer)
         struct mach_header_64 *mach_header64 = (struct mach_header_64*)(address);
         nrLoadCmds = mach_header64->ncmds;
         temp_headerinfo.is64Bits = 1;
+
+        if (mach_header64->cputype == CPU_TYPE_X86_64)
+            temp_headerinfo.cpuString = "x86_64";
+
         // first load cmd address
         address = address + sizeof(struct mach_header_64);
     }

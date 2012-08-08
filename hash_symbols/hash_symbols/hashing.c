@@ -60,3 +60,38 @@ hash_string(char *string_to_hash)
 	}
     return hash_value;
 }
+
+#define ROL(x, n) (((x) << (n)) | ((x) >> (32-(n))))
+// http://encode.ru/threads/1160-Fastest-non-secure-hash-function
+
+uint32_t 
+FNV1A_Hash_Jesteress(const char *str, size_t wrdlen)
+{
+    const uint32_t PRIME = 709607;
+    uint32_t hash32 = 2166136261;
+    const char *p = str;
+    
+    // Idea comes from Igor Pavlov's 7zCRC, thanks.
+    /*
+     for(; wrdlen && ((unsigned)(ptrdiff_t)p&3); wrdlen -= 1, p++) {
+     hash32 = (hash32 ^ *p) * PRIME;
+     }
+     */
+    for(; wrdlen >= 2*sizeof(uint32_t); wrdlen -= 2*sizeof(uint32_t), p += 2*sizeof(uint32_t)) {
+        hash32 = (hash32 ^ (ROL(*(uint32_t *)p,5)^*(uint32_t *)(p+4))) * PRIME;        
+    }
+    // Cases: 0,1,2,3,4,5,6,7
+    if (wrdlen & sizeof(uint32_t)) {
+        hash32 = (hash32 ^ *(uint32_t*)p) * PRIME;
+        p += sizeof(uint32_t);
+    }
+    if (wrdlen & sizeof(uint16_t)) {
+        hash32 = (hash32 ^ *(uint16_t*)p) * PRIME;
+        p += sizeof(uint16_t);
+    }
+    if (wrdlen & 1) 
+        hash32 = (hash32 ^ *p) * PRIME;
+    
+    return hash32 ^ (hash32 >> 16);
+}
+

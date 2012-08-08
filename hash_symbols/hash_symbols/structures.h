@@ -41,6 +41,7 @@
 struct header_info
 {
     uint8_t  is64Bits;
+    char     *cpuString;
     uint64_t linkedit_vmaddr;
     uint64_t linkedit_fileoff;
     uint32_t symtab_symoff;
@@ -68,6 +69,7 @@ struct options
     enum archs arch;
     char    *outputFolder;
     char    *symbol;
+    char    *targetName;
 };
 
 typedef struct options options_t;

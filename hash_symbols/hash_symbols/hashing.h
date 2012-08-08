@@ -36,7 +36,9 @@
 #define hash_symbols_hashing_c
 
 #include <stdint.h>
+#include <sys/types.h>
 
 int32_t hash_string(char *string_to_hash);
+uint32_t FNV1A_Hash_Jesteress(const char *str, size_t wrdlen);
 
 #endif
