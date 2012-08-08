@@ -11,6 +11,7 @@
 		DEAED95215D1D5EE00347A93 /* process.c in Sources */ = {isa = PBXBuildFile; fileRef = DEAED95015D1D5EE00347A93 /* process.c */; };
 		DEAED95515D1D60100347A93 /* file_operations.c in Sources */ = {isa = PBXBuildFile; fileRef = DEAED95315D1D60100347A93 /* file_operations.c */; };
 		DEAED95B15D1D90600347A93 /* mach_o.c in Sources */ = {isa = PBXBuildFile; fileRef = DEAED95915D1D90600347A93 /* mach_o.c */; };
+		DEAED95F15D27AF900347A93 /* hashing.c in Sources */ = {isa = PBXBuildFile; fileRef = DEAED95D15D27AF900347A93 /* hashing.c */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -35,6 +36,8 @@
 		DEAED95915D1D90600347A93 /* mach_o.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = mach_o.c; sourceTree = "<group>"; };
 		DEAED95A15D1D90600347A93 /* mach_o.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mach_o.h; sourceTree = "<group>"; };
 		DEAED95C15D1DA5100347A93 /* structures.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = structures.h; sourceTree = "<group>"; };
+		DEAED95D15D27AF900347A93 /* hashing.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = hashing.c; sourceTree = "<group>"; };
+		DEAED95E15D27AF900347A93 /* hashing.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = hashing.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -74,6 +77,8 @@
 				DEAED95A15D1D90600347A93 /* mach_o.h */,
 				DEAED95315D1D60100347A93 /* file_operations.c */,
 				DEAED95415D1D60100347A93 /* file_operations.h */,
+				DEAED95D15D27AF900347A93 /* hashing.c */,
+				DEAED95E15D27AF900347A93 /* hashing.h */,
 				DEAED95C15D1DA5100347A93 /* structures.h */,
 			);
 			path = hash_symbols;
@@ -133,6 +138,7 @@
 				DEAED95215D1D5EE00347A93 /* process.c in Sources */,
 				DEAED95515D1D60100347A93 /* file_operations.c in Sources */,
 				DEAED95B15D1D90600347A93 /* mach_o.c in Sources */,
+				DEAED95F15D27AF900347A93 /* hashing.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -187,6 +193,7 @@
 		DEAED94E15D1CBF300347A93 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -194,6 +201,7 @@
 		DEAED94F15D1CBF300347A93 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;

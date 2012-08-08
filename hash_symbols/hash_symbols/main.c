@@ -68,10 +68,10 @@ int main (int argc, const char * argv[])
     printf("|     | .'|_ -|   |  |__   | | |     | . | . | |_ -|\n");
     printf("|__|__|__,|___|_|_|  |_____|_  |_|_|_|___|___|_|___|\n");
     printf("                           |___|                    \n");
-    printf("--------------------------------------------------\n");
-    printf("| Hash Symbols - v%s                          |\n", VERSION);
-    printf("| (c) fG!, 2012 - reverser@put.as                |\n");
-    printf("--------------------------------------------------\n");
+    printf(".------------------------------------------------.\n");
+    printf("|             Hash Symbols - v%s                |\n", VERSION);
+    printf("|        (c) fG!, 2012 - reverser@put.as         |\n");
+    printf("`------------------------------------------------´\n");
 
     // read the target into our buffer
     uint8_t *targetBuffer   = NULL;

@@ -28,29 +28,35 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * structures.h
+ * hashing.c
  *
  */
 
-#ifndef hash_symbols_structures_h
-#define hash_symbols_structures_h
+#include "hashing.h"
+#include <stdio.h>
+#include <string.h>
 
-#include <stdint.h>
-
-struct header_info
+/*
+ * the hashing algorithm, modify it to suit your needs
+ * default is the one used by OS.X/Crisis malware
+ */
+int32_t
+hash_string(char *string_to_hash)
 {
-    uint8_t  is64Bits;
-    uint64_t linkedit_vmaddr;
-    uint64_t linkedit_fileoff;
-    uint32_t symtab_symoff;
-    uint32_t symtab_nsyms;
-    uint32_t symtab_stroff;
-    uint32_t symtab_strsize;
-    uint32_t dysymtab_iextdefsym;
-    uint32_t dysymtab_nextdefsym;
-    uint32_t dysymtab_iundefsym;
-    uint32_t dysymtab_nundefsym;
-};
-
-
-#endif
+    int32_t x = strlen(string_to_hash);
+	int32_t hash_value = 0;
+    
+	for (uint32_t i = 0; i < x; i++) 
+    {
+	    int32_t t1 = 0;
+	    int t2 = 0;
+	    uint8_t current_char = string_to_hash[i];
+	    t1 = hash_value << 0x6;
+	    t1 += current_char;
+	    t2 = hash_value << 0x10;
+	    t1 += t2;
+	    t1 -= hash_value;
+	    hash_value = t1;
+	}
+    return hash_value;
+}

@@ -28,29 +28,15 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * structures.h
+ * hashing.c
  *
  */
 
-#ifndef hash_symbols_structures_h
-#define hash_symbols_structures_h
+#ifndef hash_symbols_hashing_c
+#define hash_symbols_hashing_c
 
 #include <stdint.h>
 
-struct header_info
-{
-    uint8_t  is64Bits;
-    uint64_t linkedit_vmaddr;
-    uint64_t linkedit_fileoff;
-    uint32_t symtab_symoff;
-    uint32_t symtab_nsyms;
-    uint32_t symtab_stroff;
-    uint32_t symtab_strsize;
-    uint32_t dysymtab_iextdefsym;
-    uint32_t dysymtab_nextdefsym;
-    uint32_t dysymtab_iundefsym;
-    uint32_t dysymtab_nundefsym;
-};
-
+int32_t hash_string(char *string_to_hash);
 
 #endif

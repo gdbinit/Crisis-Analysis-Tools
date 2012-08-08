@@ -44,6 +44,19 @@
 struct header_info 
 process_macho_header(uint8_t **targetBuffer)
 {
+    struct header_info temp_headerinfo;
+    temp_headerinfo.is64Bits            = 0;
+    temp_headerinfo.linkedit_fileoff    = 0;
+    temp_headerinfo.linkedit_vmaddr     = 0;
+    temp_headerinfo.symtab_nsyms        = 0;
+    temp_headerinfo.symtab_stroff       = 0;
+    temp_headerinfo.symtab_strsize      = 0;
+    temp_headerinfo.symtab_symoff       = 0;
+    temp_headerinfo.dysymtab_iextdefsym = 0;
+    temp_headerinfo.dysymtab_iundefsym  = 0;
+    temp_headerinfo.dysymtab_nextdefsym = 0;
+    temp_headerinfo.dysymtab_nundefsym  = 0;
+
     uint8_t *address    = *targetBuffer;    
     uint32_t nrLoadCmds = 0;
 
@@ -59,14 +72,11 @@ process_macho_header(uint8_t **targetBuffer)
     {
         struct mach_header_64 *mach_header64 = (struct mach_header_64*)(address);
         nrLoadCmds = mach_header64->ncmds;
+        temp_headerinfo.is64Bits = 1;
         // first load cmd address
         address = address + sizeof(struct mach_header_64);
-    }   
+    }
 
-    struct header_info temp_headerinfo;
-    temp_headerinfo.linkedit_fileoff = 0;
-    temp_headerinfo.linkedit_vmaddr  = 0;
-    
     struct load_command *loadCommand = NULL;
     
     for (uint32_t i = 0; i < nrLoadCmds; i++)
@@ -96,8 +106,10 @@ process_macho_header(uint8_t **targetBuffer)
             struct symtab_command *symtabCommand = (struct symtab_command*)address;
             if (symtabCommand->cmd == LC_SYMTAB)
             {
-                temp_headerinfo.symtab_symoff = symtabCommand->symoff;
-                temp_headerinfo.symtab_nsyms  = symtabCommand->nsyms;
+                temp_headerinfo.symtab_symoff  = symtabCommand->symoff;
+                temp_headerinfo.symtab_nsyms   = symtabCommand->nsyms;
+                temp_headerinfo.symtab_stroff  = symtabCommand->stroff;
+                temp_headerinfo.symtab_strsize = symtabCommand->strsize;
             }
         }
         else if (loadCommand->cmd == LC_DYSYMTAB)
