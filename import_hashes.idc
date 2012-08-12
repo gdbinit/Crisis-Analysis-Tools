@@ -6,9 +6,11 @@
 #include <idc.idc>
 
 auto hashes_file, hash_line;
-auto arrayid;
+auto arrayid, file;
 
-hashes_file = fopen("PATH_TO_HASHES_FILE, "r");
+file = AskFile(1, "*.txt", "Select hashes file to import from");
+hashes_file = fopen(file, "r");
+
 // the id of the array we will create and then search from
 arrayid = CreateArray("libsysbhashes");
 if (arrayid == -1)
