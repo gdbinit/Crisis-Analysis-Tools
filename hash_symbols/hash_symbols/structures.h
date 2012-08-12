@@ -41,6 +41,7 @@
 struct header_info
 {
     uint8_t  is64Bits;
+    uint32_t textSegmentIndex;
     char     *cpuString;
     uint64_t linkedit_vmaddr;
     uint64_t linkedit_fileoff;

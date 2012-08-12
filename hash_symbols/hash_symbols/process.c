@@ -69,7 +69,6 @@ process_fat_binary(uint8_t **targetBuffer)
         for (uint32_t i = 0; i < nrFatArch; i++)
         {
             // for ARM we need to match cpusubtype!
-            // FIXME: test with a ARM binary
             if (ntohl(fatArch->cputype) == options.arch || ntohl(fatArch->cpusubtype) == options.arch)
             {
                 uint8_t *location = address + ntohl(fatArch->offset);
@@ -164,8 +163,9 @@ process_nonfat_binary(uint8_t **targetBuffer)
         {
             uint8_t isSymbolExternal = nlist64->n_type & N_EXT;
             uint8_t isSymbolDefined  = (nlist64->n_type & N_TYPE) == N_SECT ? 1 : 0;
-            
-            if (isSymbolExternal && isSymbolDefined && nlist64->n_sect == 1)
+            // we want to extract symbols from __TEXT segment so we use the index previously found
+            // when processing the mach-o header
+            if (isSymbolExternal && isSymbolDefined && nlist64->n_sect == header_info.textSegmentIndex)
             {
                 symbolString = ((char*)address + header_info.symtab_stroff+nlist64->n_un.n_strx);
                 if (symbolToMatchHash != 0)
@@ -197,7 +197,7 @@ process_nonfat_binary(uint8_t **targetBuffer)
             uint8_t isSymbolExternal = nlist->n_type & N_EXT;
             uint8_t isSymbolDefined  = (nlist->n_type & N_TYPE) == N_SECT ? 1 : 0;
             
-            if (isSymbolExternal && isSymbolDefined && nlist->n_sect == 1)
+            if (isSymbolExternal && isSymbolDefined && nlist->n_sect == header_info.textSegmentIndex)
             {
                 symbolString = ((char*)address + header_info.symtab_stroff+nlist->n_un.n_strx);
                 if (symbolToMatchHash != 0)

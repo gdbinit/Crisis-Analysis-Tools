@@ -56,9 +56,11 @@ process_macho_header(uint8_t **targetBuffer)
     temp_headerinfo.dysymtab_iundefsym  = 0;
     temp_headerinfo.dysymtab_nextdefsym = 0;
     temp_headerinfo.dysymtab_nundefsym  = 0;
+    temp_headerinfo.textSegmentIndex    = 0;
 
     uint8_t *address    = *targetBuffer;    
     uint32_t nrLoadCmds = 0;
+    uint32_t indexCounter = 1; // ignore PAGEZERO
 
     int32_t magic = *(uint32_t*)address;
     if (magic == MH_MAGIC)
@@ -109,6 +111,12 @@ process_macho_header(uint8_t **targetBuffer)
                 temp_headerinfo.linkedit_vmaddr  = segmentCommand->vmaddr;
                 temp_headerinfo.linkedit_fileoff = segmentCommand->fileoff;
             }
+            // search for __TEXT so we can get its index
+            // usually it's 1 but let's do it right :-)
+            if (strncmp(segmentCommand->segname, "__TEXT", 16) == 0)
+            {
+                temp_headerinfo.textSegmentIndex = indexCounter;
+            }
         }
         else if (loadCommand->cmd == LC_SEGMENT_64)
         {
@@ -143,6 +151,7 @@ process_macho_header(uint8_t **targetBuffer)
             }
         }
         address += loadCommand->cmdsize;
+        indexCounter++;
     }
     return temp_headerinfo;
 }
