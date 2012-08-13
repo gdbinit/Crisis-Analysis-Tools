@@ -1,0 +1,7 @@
+//
+// Prefix header for all source files of the 'hash_kernel_headers' target in the 'hash_kernel_headers' project
+//
+
+#ifdef __OBJC__
+    #import <Foundation/Foundation.h>
+#endif
