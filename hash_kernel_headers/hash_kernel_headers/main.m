@@ -47,9 +47,9 @@
 static void header(void);
 static void help(const char *exe);
 static uint64_t read_target(uint8_t **targetBuffer, const char *target);
-static int process_target(NSString *targetFullPath);
-static void process_macho_binary32(uint8_t *targetBuffer);
-static void process_macho_binary64(uint8_t *targetBuffer);
+static int process_target(NSString *targetFullPath, NSString *targetKext);
+static void process_macho_binary32(uint8_t *targetBuffer, const char *target_kext);
+static void process_macho_binary64(uint8_t *targetBuffer, const char *target_kext);
 
 // arch if target is a fat archive
 uint32_t targetArch = CPU_TYPE_X86;
@@ -84,7 +84,7 @@ help(const char *exe)
  * supports fat and non-fat targets
  */
 static int
-process_target(NSString *targetFullPath)
+process_target(NSString *targetFullPath, NSString *targetKext)
 {
     @autoreleasepool 
     {
@@ -144,9 +144,9 @@ process_target(NSString *targetFullPath)
                 {
                     uint8_t *location = address + ntohl(fatArch->offset);
                     if (targetArch == CPU_TYPE_X86)
-                        process_macho_binary32(location);
+                        process_macho_binary32(location, [targetKext UTF8String]);
                     else if (targetArch == CPU_TYPE_X86_64)
-                        process_macho_binary64(location);
+                        process_macho_binary64(location, [targetKext UTF8String]);
                     break;
                 }
                 fatArch++;
@@ -154,11 +154,11 @@ process_target(NSString *targetFullPath)
         }
         else if (magic == MH_MAGIC && targetArch == CPU_TYPE_X86)
         {
-            process_macho_binary32(buf);
+            process_macho_binary32(buf, [targetKext UTF8String]);
         }
         else if (magic == MH_MAGIC_64 && targetArch == CPU_TYPE_X86_64)
         {
-            process_macho_binary64(buf);
+            process_macho_binary64(buf, [targetKext UTF8String]);
         }
         else if (magic == MH_CIGAM || magic == MH_CIGAM_64)
         {
@@ -182,7 +182,7 @@ process_target(NSString *targetFullPath)
  * we hash the mach_header plus all the commands
  */
 static void
-process_macho_binary32(uint8_t *targetBuffer)
+process_macho_binary32(uint8_t *targetBuffer, const char *target_kext)
 {
     
     uint8_t *address = targetBuffer;
@@ -194,18 +194,19 @@ process_macho_binary32(uint8_t *targetBuffer)
     unsigned char digest[CC_SHA256_DIGEST_LENGTH];
     CC_SHA256(address, header_size, digest);
     
+    printf("%s,", target_kext);    
     for (uint32_t i = 0 ; i < CC_SHA256_DIGEST_LENGTH; i++)
     {
         printf("%02x", digest[i]);
     }
-    printf("\n");
+    printf(",%s\n", targetArch == CPU_TYPE_X86 ? "x86" : "x86_64");
 }
 
 /*
  * read and SHA256 the 64bits mach-o header
  */
 static void
-process_macho_binary64(uint8_t *targetBuffer)
+process_macho_binary64(uint8_t *targetBuffer, const char *target_kext)
 {
     uint8_t *address = targetBuffer;
     uint32_t header_size = 0;
@@ -213,11 +214,13 @@ process_macho_binary64(uint8_t *targetBuffer)
     header_size = sizeof(struct mach_header_64) + mh64->sizeofcmds;
     unsigned char digest[CC_SHA256_DIGEST_LENGTH];
     CC_SHA256(address, header_size, digest);
+    
+    printf("%s,", target_kext);
     for (uint32_t i = 0 ; i < CC_SHA256_DIGEST_LENGTH; i++)
     {
         printf("%02x", digest[i]);
     }
-    printf("\n");
+    printf(",%s\n", targetArch == CPU_TYPE_X86 ? "x86" : "x86_64");
 }
 
 
@@ -360,13 +363,14 @@ int main (int argc, char * argv[])
 #if DEBUG
                 printf("[DEBUG] Processing %s...\n", [targetKext UTF8String]);
 #endif
-                process_target(targetFullPath);
+                process_target(targetFullPath, targetKext);
             }
         }
         else if (!lookupKexts)
         {
             NSString *targetFullPath =  [NSString stringWithCString:search_path encoding:NSUTF8StringEncoding];
-            process_target(targetFullPath);
+            NSString *targetKext = [targetFullPath lastPathComponent];
+            process_target(targetFullPath, targetKext);
         }
     }
     return 0;
