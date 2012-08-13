@@ -3,8 +3,30 @@
  *
  * A util to hash the Mach-O headers of all kernel modules located at a given folder
  *
- * (c) fG!, 2012 - reverser@put.as - http://reverse.put.as
+ * Copyright (c) fG!, 2012 - reverser@put.as - http://reverse.put.as
  * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ * notice, this list of conditions and the following disclaimer in the
+ * documentation and/or other materials provided with the distribution.
+ * 3. The name of the author may not be used to endorse or promote products
+ * derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * main.m
  *
@@ -20,14 +42,17 @@
 #include <stdlib.h>
 #include <mach-o/loader.h>
 #include <mach-o/fat.h>
+#include <getopt.h>
 
 static void header(void);
 static void help(const char *exe);
 static uint64_t read_target(uint8_t **targetBuffer, const char *target);
-static int process_target(NSString *searchPath, NSString *targetKext);
+static int process_target(NSString *targetFullPath);
 static void process_macho_binary32(uint8_t *targetBuffer);
 static void process_macho_binary64(uint8_t *targetBuffer);
 
+// arch if target is a fat archive
+uint32_t targetArch = CPU_TYPE_X86;
 
 static void
 header(void)
@@ -44,9 +69,14 @@ help(const char *exe)
     header();
     printf("\n");
     printf("Usage Syntax:\n");
-    printf("%s <path>\n", exe);
+    printf("%s <path> [<options>]\n", exe);
     printf("where:\n");
-    printf("<path>: path to the kernel modules folder\n");
+    printf("<path>: path to the kernel module folder\n");
+    printf("and options:\n");
+    printf("-f: folder to search kernel modules from (example: /System/Library/Extensions)\n");
+    printf("-a: target architecture\n");
+    printf("    valid options are i386 or x86, x86_64 (default is i386)\n");
+    printf("    if target doesn't have this arch it will be skipped\n");
 }
 
 /*
@@ -54,19 +84,17 @@ help(const char *exe)
  * supports fat and non-fat targets
  */
 static int
-process_target(NSString *searchPath, NSString *targetKext)
+process_target(NSString *targetFullPath)
 {
     @autoreleasepool 
     {
         int ret = 0;
         const char *target = NULL;
-        // build full path to the kext to be processed
-        NSString *targetFolder = [searchPath stringByAppendingPathComponent:targetKext];
         // find the main executable by processing the Info.plist
-        NSBundle *bundle = [NSBundle bundleWithPath:targetFolder];
+        NSBundle *bundle = [NSBundle bundleWithPath:targetFullPath];
         if (bundle == nil)
         {
-            printf("No valid bundle found at %s\n", [targetFolder UTF8String]);
+            fprintf(stderr, "[ERROR] No valid bundle found at %s\n", [targetFullPath UTF8String]);
             return 1;
         }
         NSDictionary *plistData = [bundle infoDictionary];
@@ -75,7 +103,7 @@ process_target(NSString *searchPath, NSString *targetKext)
         if (targetExe != nil)
         {
             // the path to the binary to be analyzed
-            NSString *tempTarget = [[targetFolder stringByAppendingPathComponent:@"Contents/MacOS"]
+            NSString *tempTarget = [[targetFullPath stringByAppendingPathComponent:@"Contents/MacOS"]
                                     stringByAppendingPathComponent:targetExe];
             target = [tempTarget UTF8String];
             
@@ -90,16 +118,13 @@ process_target(NSString *searchPath, NSString *targetKext)
         }
         else
         {
-            fprintf(stderr, "[ERROR] Can't find the target exe at %s plist\n", [targetFolder UTF8String]);
+            fprintf(stderr, "[ERROR] Can't find the target exe at %s plist\n", [targetFullPath UTF8String]);
             return 1;
         }
         // read target file into a buffer
         uint64_t fileSize = 0;
         uint8_t *buf = NULL;
         fileSize = read_target(&buf, target);
-        
-        // FIXME
-        int arch = CPU_TYPE_X86_64;
         
         // verify if it's a valid mach-o target
         uint32_t magic = *(uint32_t*)(buf);
@@ -115,26 +140,34 @@ process_target(NSString *searchPath, NSString *targetKext)
             // find the correct architecture
             for (uint32_t i = 0; i < nrFatArch; i++)
             {
-                if (ntohl(fatArch->cputype) == arch)
+                if (ntohl(fatArch->cputype) == targetArch)
                 {
                     uint8_t *location = address + ntohl(fatArch->offset);
-                    process_macho_binary32(location);
+                    if (targetArch == CPU_TYPE_X86)
+                        process_macho_binary32(location);
+                    else if (targetArch == CPU_TYPE_X86_64)
+                        process_macho_binary64(location);
                     break;
                 }
                 fatArch++;
             }
         }
-        else if (magic == MH_MAGIC)
+        else if (magic == MH_MAGIC && targetArch == CPU_TYPE_X86)
         {
             process_macho_binary32(buf);
         }
-        else if (magic == MH_MAGIC_64)
+        else if (magic == MH_MAGIC_64 && targetArch == CPU_TYPE_X86_64)
         {
             process_macho_binary64(buf);
         }
+        else if (magic == MH_CIGAM || magic == MH_CIGAM_64)
+        {
+            fprintf(stderr, "[ERROR] Target arch not supported!\n");
+            ret = 1;
+        }
         else 
         {
-            printf("[ERROR] Target is not a valid mach-o binary or arch not supported!\n");
+            fprintf(stderr, "[ERROR] Target is not a valid mach-o binary or arch not present!\n");
             ret = 1;
         }
         
@@ -238,43 +271,103 @@ read_target(uint8_t **targetBuffer, const char *target)
 /*
  * where everything starts!
  */
-int main (int argc, const char * argv[])
+int main (int argc, char * argv[])
 {
     @autoreleasepool 
     {
-        if (argc <= 1)
+        // required structure for long options
+        static struct option long_options[]={
+            { "folder", no_argument, NULL, 'f' },
+            { "arch",   required_argument, NULL, 'a' },
+            { "help",   no_argument, NULL, 'h' },
+            { NULL, 0, NULL, 0 }
+        };
+        int option_index = 0;
+        int c = 0;
+        
+        char *my_program_name = argv[0];
+        char *search_path = NULL;
+        uint8_t lookupKexts = 0;
+        
+        // process command line options
+        while ((c = getopt_long(argc, argv, "fa:h", long_options, &option_index)) != -1)
         {
-            header();
-            printf("[ERROR] Missing path to kernel modules folder!\n");
-            exit(1);
+            switch (c)
+            {
+                case ':':
+                case '?':
+                case 'h':
+                    help(my_program_name);
+                    exit(1);
+                    break;
+                case 'a':
+                {
+                    if (strcmp(optarg, "i386") == 0 || strcmp(optarg, "x86") == 0)
+                        targetArch = CPU_TYPE_X86;
+                    else if (strcmp(optarg, "x86_64") == 0)
+                        targetArch = CPU_TYPE_X86_64;
+                    else
+                    {
+                        help(my_program_name);
+                        exit(1);
+                    }
+                    break;
+                }
+                case 'f':
+                    lookupKexts = 1;
+                    break;
+                default:
+                    help(my_program_name);
+                    exit(1);
+            }
         }
         
-        char *my_program_name = (char*)argv[0];
-        char *search_path = (char*)argv[1];
+        // switches are set but there's no target configured
+        if ((argv+optind)[0] == NULL)
+        {
+            fprintf(stderr, "***************************************\n");
+            fprintf(stderr, "[ERROR] Target kext or folder required!\n");
+            fprintf(stderr, "***************************************\n");
+            help(my_program_name);
+            exit(1);
+        }
+        // set the target folder to process
+        // either lookup if -f option was set else a single kext target
+        search_path = (argv+optind)[0];
         
         // test if folder exists
         struct stat fstatus;
-        int folder_status = stat(search_path, &fstatus);
-        if (folder_status)
+        if (stat(search_path, &fstatus))
         {
-            printf("[ERROR] Target folder %s does not exist or no access allowed! %d\n", search_path, errno);
+            fprintf(stderr, "[ERROR] Target folder %s does not exist or no access allowed!\n", search_path);
             exit(1);
         }
         
-        // find target kexts
-        NSFileManager *fm = [NSFileManager new];
-        NSString *searchPath = [NSString stringWithCString:search_path encoding:NSUTF8StringEncoding];
-        NSArray *kextMainList = [fm contentsOfDirectoryAtPath:searchPath error:NULL];
-        
-        // process each kernel extension
-        // we need to be careful with PlugIns, which are additional kexts
-        for (NSString *targetKext in kextMainList)
+        if (lookupKexts)
         {
+            // find target kexts
+            NSFileManager *fm = [NSFileManager new];
+            NSString *searchPath = [NSString stringWithCString:search_path encoding:NSUTF8StringEncoding];
+            NSArray *kextMainList = [fm contentsOfDirectoryAtPath:searchPath error:NULL];
+            
+            // process each kernel extension
+            // we need to be careful with PlugIns, which are additional kexts
+            for (NSString *targetKext in kextMainList)
+            {
+                // build full path to the kext to be processed
+                NSString *targetFullPath = [searchPath stringByAppendingPathComponent:targetKext];
+                
 #if DEBUG
-            printf("Processing %s...\n", [targetKext UTF8String]);
+                printf("[DEBUG] Processing %s...\n", [targetKext UTF8String]);
 #endif
-            process_target(searchPath, targetKext);
-        }        
+                process_target(targetFullPath);
+            }
+        }
+        else if (!lookupKexts)
+        {
+            NSString *targetFullPath =  [NSString stringWithCString:search_path encoding:NSUTF8StringEncoding];
+            process_target(targetFullPath);
+        }
     }
     return 0;
 }
