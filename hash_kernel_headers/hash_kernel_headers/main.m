@@ -50,6 +50,7 @@ static uint64_t read_target(uint8_t **targetBuffer, const char *target);
 static int process_target(NSString *targetFullPath, NSString *targetKext);
 static void process_macho_binary32(uint8_t *targetBuffer, const char *target_kext);
 static void process_macho_binary64(uint8_t *targetBuffer, const char *target_kext);
+static void find_plugins(NSString *targetFullPath);
 
 // arch if target is a fat archive
 uint32_t targetArch = CPU_TYPE_X86;
@@ -174,7 +175,6 @@ process_target(NSString *targetFullPath, NSString *targetKext)
         free(buf);
         return ret;
     }
-
 }
 
 /*
@@ -223,6 +223,34 @@ process_macho_binary64(uint8_t *targetBuffer, const char *target_kext)
     printf(",%s\n", targetArch == CPU_TYPE_X86 ? "x86" : "x86_64");
 }
 
+/*
+ * function that will try to find kext PlugIns and process them
+ */
+static void 
+find_plugins(NSString *targetFullPath)
+{
+    @autoreleasepool 
+    {
+        NSFileManager *fm = [NSFileManager new];
+        NSString *pluginsPath = [targetFullPath stringByAppendingPathComponent:@"Contents/PlugIns"];
+        if ([fm fileExistsAtPath:pluginsPath])
+        {
+            NSArray *kextPluginsList = [fm contentsOfDirectoryAtPath:pluginsPath error:NULL];
+            // process each kernel extension
+            // we need to be careful with PlugIns, which are additional kexts
+            for (NSString *targetKextPlugin in kextPluginsList)
+            {
+                // build full path to the kext to be processed
+                NSString *targetPluginFullPath = [pluginsPath stringByAppendingPathComponent:targetKextPlugin];
+                
+#if DEBUG
+                printf("[DEBUG] Processing plugin %s...\n", [targetKextPlugin UTF8String]);
+#endif
+                process_target(targetPluginFullPath, targetKextPlugin);
+            }
+        }
+    }
+}
 
 /*
  * read the target file into a buffer
@@ -346,15 +374,15 @@ int main (int argc, char * argv[])
             exit(1);
         }
         
+        // we want to search all available kexts at a given folder
         if (lookupKexts)
         {
             // find target kexts
-            NSFileManager *fm = [NSFileManager new];
+            NSFileManager *fm = [NSFileManager new];            
             NSString *searchPath = [NSString stringWithCString:search_path encoding:NSUTF8StringEncoding];
             NSArray *kextMainList = [fm contentsOfDirectoryAtPath:searchPath error:NULL];
             
             // process each kernel extension
-            // we need to be careful with PlugIns, which are additional kexts
             for (NSString *targetKext in kextMainList)
             {
                 // build full path to the kext to be processed
@@ -364,13 +392,18 @@ int main (int argc, char * argv[])
                 printf("[DEBUG] Processing %s...\n", [targetKext UTF8String]);
 #endif
                 process_target(targetFullPath, targetKext);
+                // verify if it contains any kext PlugIns
+                find_plugins(targetFullPath);
             }
         }
+        // or just process a single kext
         else if (!lookupKexts)
         {
             NSString *targetFullPath =  [NSString stringWithCString:search_path encoding:NSUTF8StringEncoding];
             NSString *targetKext = [targetFullPath lastPathComponent];
             process_target(targetFullPath, targetKext);
+            // verify if it contains any kext PlugIns
+            find_plugins(targetFullPath);
         }
     }
     return 0;
