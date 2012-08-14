@@ -1,7 +1,8 @@
 /*
  * hash_kernel_headers
+ * v0.1
  *
- * A util to hash the Mach-O headers of all kernel modules located at a given folder
+ * A util to hash the Mach-O headers of a single or all kernel modules located at a given folder
  *
  * Copyright (c) fG!, 2012 - reverser@put.as - http://reverse.put.as
  * All rights reserved.
@@ -54,6 +55,7 @@ static void find_plugins(NSString *targetFullPath);
 
 // arch if target is a fat archive
 uint32_t targetArch = CPU_TYPE_X86;
+FILE *output_file = NULL;
 
 static void
 header(void)
@@ -78,6 +80,7 @@ help(const char *exe)
     printf("-a: target architecture\n");
     printf("    valid options are i386 or x86, x86_64 (default is i386)\n");
     printf("    if target doesn't have this arch it will be skipped\n");
+    printf("-o: output file, default is stdout\n");
 }
 
 /*
@@ -194,12 +197,13 @@ process_macho_binary32(uint8_t *targetBuffer, const char *target_kext)
     unsigned char digest[CC_SHA256_DIGEST_LENGTH];
     CC_SHA256(address, header_size, digest);
     
-    printf("%s,", target_kext);    
+    FILE *f = output_file != NULL ? output_file : stdout;
+    fprintf(f, "%s,", target_kext);
     for (uint32_t i = 0 ; i < CC_SHA256_DIGEST_LENGTH; i++)
     {
-        printf("%02x", digest[i]);
+        fprintf(f, "%02x", digest[i]);
     }
-    printf(",%s\n", targetArch == CPU_TYPE_X86 ? "x86" : "x86_64");
+    fprintf(f, ",%s\n", targetArch == CPU_TYPE_X86 ? "x86" : "x86_64");
 }
 
 /*
@@ -215,12 +219,13 @@ process_macho_binary64(uint8_t *targetBuffer, const char *target_kext)
     unsigned char digest[CC_SHA256_DIGEST_LENGTH];
     CC_SHA256(address, header_size, digest);
     
-    printf("%s,", target_kext);
+    FILE *f = output_file != NULL ? output_file : stdout;
+    fprintf(f, "%s,", target_kext);
     for (uint32_t i = 0 ; i < CC_SHA256_DIGEST_LENGTH; i++)
     {
-        printf("%02x", digest[i]);
+        fprintf(f, "%02x", digest[i]);
     }
-    printf(",%s\n", targetArch == CPU_TYPE_X86 ? "x86" : "x86_64");
+    fprintf(f, ",%s\n", targetArch == CPU_TYPE_X86 ? "x86" : "x86_64");
 }
 
 /*
@@ -310,6 +315,7 @@ int main (int argc, char * argv[])
         static struct option long_options[]={
             { "folder", no_argument, NULL, 'f' },
             { "arch",   required_argument, NULL, 'a' },
+            { "output", required_argument, NULL, 'o' },
             { "help",   no_argument, NULL, 'h' },
             { NULL, 0, NULL, 0 }
         };
@@ -319,9 +325,9 @@ int main (int argc, char * argv[])
         char *my_program_name = argv[0];
         char *search_path = NULL;
         uint8_t lookupKexts = 0;
-        
+        char *output_filename = NULL;
         // process command line options
-        while ((c = getopt_long(argc, argv, "fa:h", long_options, &option_index)) != -1)
+        while ((c = getopt_long(argc, argv, "fa:ho:", long_options, &option_index)) != -1)
         {
             switch (c)
             {
@@ -346,6 +352,9 @@ int main (int argc, char * argv[])
                 }
                 case 'f':
                     lookupKexts = 1;
+                    break;
+                case 'o':
+                    output_filename = optarg;
                     break;
                 default:
                     help(my_program_name);
@@ -372,6 +381,16 @@ int main (int argc, char * argv[])
         {
             fprintf(stderr, "[ERROR] Target folder %s does not exist or no access allowed!\n", search_path);
             exit(1);
+        }
+        
+        if (output_filename != NULL)
+        {
+            output_file = fopen(output_filename, "w+");
+            if (output_file == NULL)
+            {
+                fprintf(stderr, "[ERROR] Opening output file %s\n", output_filename);
+                exit(1);
+            }
         }
         
         // we want to search all available kexts at a given folder
@@ -405,6 +424,7 @@ int main (int argc, char * argv[])
             // verify if it contains any kext PlugIns
             find_plugins(targetFullPath);
         }
+        fclose(output_file);
     }
     return 0;
 }
