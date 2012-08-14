@@ -52,6 +52,7 @@ static int process_target(NSString *targetFullPath, NSString *targetKext);
 static void process_macho_binary32(uint8_t *targetBuffer, const char *target_kext);
 static void process_macho_binary64(uint8_t *targetBuffer, const char *target_kext);
 static void find_plugins(NSString *targetFullPath);
+static void print_uuid(uint8_t *mh, uint32_t ncmds, FILE *f);
 
 // arch if target is a fat archive
 uint32_t targetArch = CPU_TYPE_X86;
@@ -126,9 +127,8 @@ process_target(NSString *targetFullPath, NSString *targetKext)
             return 1;
         }
         // read target file into a buffer
-        uint64_t fileSize = 0;
         uint8_t *buf = NULL;
-        fileSize = read_target(&buf, target);
+        read_target(&buf, target);
         
         // verify if it's a valid mach-o target
         uint32_t magic = *(uint32_t*)(buf);
@@ -187,7 +187,6 @@ process_target(NSString *targetFullPath, NSString *targetKext)
 static void
 process_macho_binary32(uint8_t *targetBuffer, const char *target_kext)
 {
-    
     uint8_t *address = targetBuffer;
     uint32_t header_size = 0;
     // find the total header size to be hashed
@@ -203,7 +202,9 @@ process_macho_binary32(uint8_t *targetBuffer, const char *target_kext)
     {
         fprintf(f, "%02x", digest[i]);
     }
-    fprintf(f, ",%s\n", targetArch == CPU_TYPE_X86 ? "x86" : "x86_64");
+    fprintf(f, ",%s", targetArch == CPU_TYPE_X86 ? "x86" : "x86_64");
+    // dump uuid
+    print_uuid((uint8_t*)(mh+1), mh->ncmds, f);
 }
 
 /*
@@ -225,7 +226,40 @@ process_macho_binary64(uint8_t *targetBuffer, const char *target_kext)
     {
         fprintf(f, "%02x", digest[i]);
     }
-    fprintf(f, ",%s\n", targetArch == CPU_TYPE_X86 ? "x86" : "x86_64");
+    fprintf(f, ",%s", targetArch == CPU_TYPE_X86 ? "x86" : "x86_64");
+    // dump uuid
+    print_uuid((uint8_t*)(mh64+1), mh64->ncmds, f);
+}
+
+/*
+ * print the UUID, for 32 and 64bits targets
+ * first parameter is the position of first load command
+ */
+static void
+print_uuid(uint8_t *mh, uint32_t ncmds, FILE *f)
+{
+    struct load_command* lc = (struct load_command*)(mh);
+    for (uint32_t i = 0; i < ncmds; i++)
+    {
+        switch (lc->cmd) 
+        {
+            case LC_UUID: 
+            {
+                struct uuid_command* uuid = (struct uuid_command*)lc;
+                fprintf(f, ",%02X%02X%02X%02X-%02X%02X-%02X%02X-%02X%02X-%02X%02X%02X%02X%02X%02X",
+                        (unsigned int)uuid->uuid[0],  (unsigned int)uuid->uuid[1],
+                        (unsigned int)uuid->uuid[2],  (unsigned int)uuid->uuid[3],
+                        (unsigned int)uuid->uuid[4],  (unsigned int)uuid->uuid[5],
+                        (unsigned int)uuid->uuid[6],  (unsigned int)uuid->uuid[7],
+                        (unsigned int)uuid->uuid[8],  (unsigned int)uuid->uuid[9],
+                        (unsigned int)uuid->uuid[10], (unsigned int)uuid->uuid[11],
+                        (unsigned int)uuid->uuid[12], (unsigned int)uuid->uuid[13],
+                        (unsigned int)uuid->uuid[14], (unsigned int)uuid->uuid[15]);
+                fprintf(f, "\n");
+            }
+        }
+        lc = (struct load_command*)((char*)lc + lc->cmdsize);
+    }
 }
 
 /*
@@ -406,7 +440,6 @@ int main (int argc, char * argv[])
             {
                 // build full path to the kext to be processed
                 NSString *targetFullPath = [searchPath stringByAppendingPathComponent:targetKext];
-                
 #if DEBUG
                 printf("[DEBUG] Processing %s...\n", [targetKext UTF8String]);
 #endif
