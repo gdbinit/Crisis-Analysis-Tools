@@ -1,0 +1,47 @@
+
+   ('-.       .-') _                    _   .-')      ('-.     
+ _(  OO)     ( OO ) )                  ( '.( OO )_   ( OO ).-. 
+(,------.,--./ ,--,' ,-.-')   ,----.    ,--.   ,--.) / . --. / 
+ |  .---'|   \ |  |\ |  |OO) '  .-./-') |   `.'   |  | \-.  \  
+ |  |    |    \|  | )|  |  \ |  |_( O- )|         |.-'-'  |  | 
+(|  '--. |  .     |/ |  |(_/ |  | .--, \|  |'.'|  | \| |_.'  | 
+ |  .--' |  |\    | ,|  |_.'(|  | '. (_/|  |   |  |  |  .-.  | 
+ |  `---.|  | \   |(_|  |    |  '--'  | |  |   |  |  |  | |  | 
+ `------'`--'  `--'  `--'     `------'  `--'   `--'  `--' `--' 
+ 
+Crisis configuration, log files and stolen data decryptor and cryptor
+v0.1
+
+(c) fG!, 2012 - reverser@put.as - http://reverse.put.as
+All rights reserved.
+
+A command line util to decrypt and encrypt OS.X/Crisis config, log and data files.
+
+For now only the config files are working.
+Output will use the same name as input and add the extensions .decrypted or .encrypted.
+
+Usage Syntax:
+
+enigma target <options>
+where:
+target - target binary to encrypt or decrypt
+and options:
+-c: encrypt
+-d: decrypt
+-t <type>: target type, 0-config, 1-log, 2-data
+
+
+Sample usage to decrypt the configuration file:
+$ ./enigma eiYNz1gd.Cfp -d -t 0
+ _____     _               
+|   __|___|_|___ _____ ___ 
+|   __|   | | . |     | .'|
+|_____|_|_|_|_  |_|_|_|__,|
+            |___|          
+                       v0.1
+              (c) fG!, 2012
+
+Successfully decrypted 2449 bytes!
+
+Enjoy,
+fG!

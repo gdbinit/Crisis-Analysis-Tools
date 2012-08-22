@@ -1,0 +1,232 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		DE8D7E9F15E4469300B563A7 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DE8D7E9E15E4469300B563A7 /* Foundation.framework */; };
+		DE8D7EA215E4469300B563A7 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = DE8D7EA115E4469300B563A7 /* main.m */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		DE8D7E9815E4469200B563A7 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		DE8D7E9A15E4469300B563A7 /* enigma */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = enigma; sourceTree = BUILT_PRODUCTS_DIR; };
+		DE8D7E9E15E4469300B563A7 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
+		DE8D7EA115E4469300B563A7 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		DE8D7EA415E4469300B563A7 /* enigma-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "enigma-Prefix.pch"; sourceTree = "<group>"; };
+		DE8D7EAC15E45E0A00B563A7 /* README */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = README; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		DE8D7E9715E4469200B563A7 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DE8D7E9F15E4469300B563A7 /* Foundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		DE8D7E8F15E4469200B563A7 = {
+			isa = PBXGroup;
+			children = (
+				DE8D7EAC15E45E0A00B563A7 /* README */,
+				DE8D7EA015E4469300B563A7 /* enigma */,
+				DE8D7E9D15E4469300B563A7 /* Frameworks */,
+				DE8D7E9B15E4469300B563A7 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		DE8D7E9B15E4469300B563A7 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				DE8D7E9A15E4469300B563A7 /* enigma */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		DE8D7E9D15E4469300B563A7 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				DE8D7E9E15E4469300B563A7 /* Foundation.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		DE8D7EA015E4469300B563A7 /* enigma */ = {
+			isa = PBXGroup;
+			children = (
+				DE8D7EA115E4469300B563A7 /* main.m */,
+				DE8D7EA315E4469300B563A7 /* Supporting Files */,
+			);
+			path = enigma;
+			sourceTree = "<group>";
+		};
+		DE8D7EA315E4469300B563A7 /* Supporting Files */ = {
+			isa = PBXGroup;
+			children = (
+				DE8D7EA415E4469300B563A7 /* enigma-Prefix.pch */,
+			);
+			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		DE8D7E9915E4469200B563A7 /* enigma */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = DE8D7EA915E4469300B563A7 /* Build configuration list for PBXNativeTarget "enigma" */;
+			buildPhases = (
+				DE8D7E9615E4469200B563A7 /* Sources */,
+				DE8D7E9715E4469200B563A7 /* Frameworks */,
+				DE8D7E9815E4469200B563A7 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = enigma;
+			productName = enigma;
+			productReference = DE8D7E9A15E4469300B563A7 /* enigma */;
+			productType = "com.apple.product-type.tool";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		DE8D7E9115E4469200B563A7 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0420;
+			};
+			buildConfigurationList = DE8D7E9415E4469200B563A7 /* Build configuration list for PBXProject "enigma" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = DE8D7E8F15E4469200B563A7;
+			productRefGroup = DE8D7E9B15E4469300B563A7 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				DE8D7E9915E4469200B563A7 /* enigma */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		DE8D7E9615E4469200B563A7 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DE8D7EA215E4469300B563A7 /* main.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		DE8D7EA715E4469300B563A7 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				COPY_PHASE_STRIP = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.6;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		DE8D7EA815E4469300B563A7 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.6;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		DE8D7EAA15E4469300B563A7 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "enigma/enigma-Prefix.pch";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		DE8D7EAB15E4469300B563A7 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "enigma/enigma-Prefix.pch";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		DE8D7E9415E4469200B563A7 /* Build configuration list for PBXProject "enigma" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				DE8D7EA715E4469300B563A7 /* Debug */,
+				DE8D7EA815E4469300B563A7 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		DE8D7EA915E4469300B563A7 /* Build configuration list for PBXNativeTarget "enigma" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				DE8D7EAA15E4469300B563A7 /* Debug */,
+				DE8D7EAB15E4469300B563A7 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = DE8D7E9115E4469200B563A7 /* Project object */;
+}
