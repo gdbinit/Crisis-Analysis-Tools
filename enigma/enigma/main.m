@@ -175,19 +175,19 @@ int main (int argc, char * argv[])
             outDataSize = inDataSize + kCCBlockSizeAES128;
             outData = calloc(1, outDataSize);
             
-            CCCrypt(kCCDecrypt,             // op
-                    kCCAlgorithmAES128,     // alg
-                    kCCOptionPKCS7Padding,  // options
-                    key,                    // key
-                    kCCKeySizeAES128,       // keyLength
-                    NULL,                   // iv
-                    [inData bytes],         // dataIn
-                    inDataSize,             // dataInLength
-                    outData,                // dataOut
-                    outDataSize,            // dataOutAvailable
-                    &processedSize);        // dataOutMoved
+            CCCryptorStatus ret = CCCrypt(kCCDecrypt,             // op
+                                          kCCAlgorithmAES128,     // alg
+                                          kCCOptionPKCS7Padding,  // options
+                                          key,                    // key
+                                          kCCKeySizeAES128,       // keyLength
+                                          NULL,                   // iv
+                                          [inData bytes],         // dataIn
+                                          inDataSize,             // dataInLength
+                                          outData,                // dataOut
+                                          outDataSize,            // dataOutAvailable
+                                          &processedSize);        // dataOutMoved
             
-            if (processedSize > 0)
+            if (processedSize > 0 && ret == kCCSuccess)
             {
                 // verify if original SHA1 hash is ok
                 // last 20 bytes of the decrypted file are the SHA1 hash
@@ -250,19 +250,19 @@ int main (int argc, char * argv[])
             memcpy(bufferToEncrypt, [inData bytes], inDataSize);
             memcpy(bufferToEncrypt+inDataSize, hashBuffer, CC_SHA1_DIGEST_LENGTH);
             
-            CCCrypt(kCCEncrypt,             // op
-                    kCCAlgorithmAES128,     // alg
-                    kCCOptionPKCS7Padding,  // options
-                    key,                    // key
-                    kCCKeySizeAES128,       // keyLength
-                    NULL,                   // iv
-                    bufferToEncrypt,        // dataIn
-                    inDataPlusHashSize,     // dataInLength
-                    outData,                // dataOut
-                    outDataSize,            // dataOutAvailable
-                    &processedSize);        // dataOutMoved
+            CCCryptorStatus ret = CCCrypt(kCCEncrypt,             // op
+                                          kCCAlgorithmAES128,     // alg
+                                          kCCOptionPKCS7Padding,  // options
+                                          key,                    // key
+                                          kCCKeySizeAES128,       // keyLength
+                                          NULL,                   // iv
+                                          bufferToEncrypt,        // dataIn
+                                          inDataPlusHashSize,     // dataInLength
+                                          outData,                // dataOut
+                                          outDataSize,            // dataOutAvailable
+                                          &processedSize);        // dataOutMoved
 
-            if (processedSize > 0)
+            if (processedSize > 0 && ret == kCCSuccess)
             {
                 printf("Successfully encrypted %ld bytes!\n", processedSize);
                 

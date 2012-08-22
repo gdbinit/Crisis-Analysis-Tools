@@ -10,7 +10,7 @@
  `------'`--'  `--'  `--'     `------'  `--'   `--'  `--' `--' 
  
 Crisis configuration, log files and stolen data decryptor and cryptor
-v0.1
+v0.2
 
 (c) fG!, 2012 - reverser@put.as - http://reverse.put.as
 All rights reserved.
@@ -19,6 +19,8 @@ A command line util to decrypt and encrypt OS.X/Crisis config, log and data file
 
 For now only the config files are working.
 Output will use the same name as input and add the extensions .decrypted or .encrypted.
+
+The encrypted files are correctly hashed so they can be used to play with OS.X/Crisis :-)
 
 Usage Syntax:
 
