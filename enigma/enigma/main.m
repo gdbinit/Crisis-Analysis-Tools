@@ -9,7 +9,7 @@
  *  |  `---.|  | \   |(_|  |    |  '--'  | |  |   |  |  |  | |  | 
  *  `------'`--'  `--'  `--'     `------'  `--'   `--'  `--' `--' 
  *
- * Crisis configuration, log files and stolen data decryptor and cryptor
+ * Crisis configuration, data log files decryptor and cryptor
  *
  * (c) fG!, 2012 - reverser@put.as - http://reverse.put.as
  * All rights reserved.
@@ -51,9 +51,15 @@
 
 #define T_CONFIG 0
 #define T_LOG    1
-#define T_DATA   2
 
-#define VERSION "0.2"
+#define LOG_EXTENSION ".gai"
+
+#define VERSION "0.3"
+
+char keyConfig[kCCKeySizeAES128+1] = "\xA6\xF7\xF3\x41\x23\xA6\xA1\xAB\x12\xFA\xE0\xAA\x61\xD0\x2C\x2D";
+char keyLog[kCCKeySizeAES128+1]    = "\x1D\xD2\x06\xAD\x67\xC8\x52\xE8\x80\x72\xA4\x98\x41\x87\x63\x7F";
+
+size_t crypt_operation(CCOperation op, void *inData, size_t inDataSize, void *outData, size_t outDataSize, char *key, CCOptions options);
 
 static void
 help(const char *exe)
@@ -66,7 +72,7 @@ help(const char *exe)
     printf("and options:\n");
     printf("-c: encrypt\n");
     printf("-d: decrypt\n");
-    printf("-t <type>: target type, 0-config, 1-log, 2-data\n");
+    printf("-t <type>: target type, 0-config, 1-log\n");
 }
 
 static void
@@ -84,7 +90,8 @@ header(void)
 int main (int argc, char * argv[])
 {
 
-    @autoreleasepool {
+    @autoreleasepool
+    {
         header();
         
         // required structure for long options
@@ -137,16 +144,33 @@ int main (int argc, char * argv[])
             help(myProgramName);
             exit(1);
         }
+        
         NSString *targetFileName = [NSString stringWithCString:(argv+optind)[0] 
                                                       encoding:NSUTF8StringEncoding];
         
-        NSFileManager *fm = [NSFileManager defaultManager];
-        NSData *inData    = [fm contentsAtPath:targetFileName];
+        NSFileManager *fm    = [NSFileManager defaultManager];
+        NSData *inNSData     = [fm contentsAtPath:targetFileName];
+        size_t inDataSize    = [inNSData length];    // size of data to be decrypted/encrypted
+        void *inData         = NULL;                 // buffer to hold the input data
+        void *outData        = NULL;                 // buffer that will hold the decrypted/encrypted data
+        size_t outDataSize   = 0;                    // size of this buffer
+        size_t processedSize = 0;                    // the total bytes process by CCCrypt()
         
-        // the encryption keys
+        // allocate enough memory for the buffers and copy from the NSData object
+        if (type == T_CONFIG && operation == OP_ENCRYPT)
+        {
+            inData = calloc(1, inDataSize+CC_SHA1_DIGEST_LENGTH); // we will need to append the SHA1 before encryption
+            memcpy(inData, [inNSData bytes], inDataSize);
+        }
+        else
+        {
+            inData = calloc(1, inDataSize);
+            memcpy(inData, [inNSData bytes], inDataSize);
+        }
+        
+        
+        // set the right encryption key based on target type
         char *key = NULL;
-        char keyConfig[kCCKeySizeAES128+1] = "\xA6\xF7\xF3\x41\x23\xA6\xA1\xAB\x12\xFA\xE0\xAA\x61\xD0\x2C\x2D";
-        char keyLog[kCCKeySizeAES128+1]    = "\x1D\xD2\x06\xAD\x67\xC8\x52\xE8\x80\x72\xA4\x98\x41\x87\x63\x7F";
         
         switch (type) 
         {
@@ -156,87 +180,27 @@ int main (int argc, char * argv[])
             case T_LOG:
                 key = keyLog;
                 break;
-            case T_DATA:
-                break;
             default:
                 break;
         }
 
-        void *outData         = NULL; // buffer that will hold the decrypted/encrypted data
-        size_t outDataSize    = 0;    // size of this buffer
-        size_t processedSize  = 0;    // the total bytes process by CCCrypt()
-        NSUInteger inDataSize = 0;    // size of data to be decrypted/encrypted
-
-        // DECRYPT IT !!!!!
-        if (operation == OP_DECRYPT)
+        // DECRYPT CONFIG FILE
+        if (type == T_CONFIG && operation == OP_DECRYPT)
         {
-            inDataSize = [inData length];
             // output buffer for CCCrypt()
-            outDataSize = inDataSize + kCCBlockSizeAES128;
+            outDataSize = inDataSize + kCCBlockSizeAES128; // out data size, add the block size
             outData = calloc(1, outDataSize);
+            // decrypt data, function will exit if there's any failure
+            processedSize = crypt_operation(kCCDecrypt, inData, inDataSize, outData, outDataSize, key, kCCOptionPKCS7Padding);
             
-            CCCryptorStatus ret = CCCrypt(kCCDecrypt,             // op
-                                          kCCAlgorithmAES128,     // alg
-                                          kCCOptionPKCS7Padding,  // options
-                                          key,                    // key
-                                          kCCKeySizeAES128,       // keyLength
-                                          NULL,                   // iv
-                                          [inData bytes],         // dataIn
-                                          inDataSize,             // dataInLength
-                                          outData,                // dataOut
-                                          outDataSize,            // dataOutAvailable
-                                          &processedSize);        // dataOutMoved
-            
-            if (processedSize > 0 && ret == kCCSuccess)
-            {
-                // verify if original SHA1 hash is ok
-                // last 20 bytes of the decrypted file are the SHA1 hash
-                NSUInteger noHashDataSize = processedSize-CC_SHA1_DIGEST_LENGTH;
-                unsigned char hashBuffer[CC_SHA1_DIGEST_LENGTH+1];
-                
-                NSData *originalHash = [NSData dataWithBytes:outData+noHashDataSize length:CC_SHA1_DIGEST_LENGTH];
-                // hash the decrypted data minus the SHA1 hash
-                CC_SHA1(outData, (CC_LONG)noHashDataSize, hashBuffer);
-#if DEBUG
-                for (int i = 0; i < CC_SHA1_DIGEST_LENGTH; i++)
-                {
-                    printf("%02hhx", hashBuffer[i]);
-                }
-                printf("\n");
-#endif
-                // verify if original hash and our computed hash match
-                if (memcmp([originalHash bytes], hashBuffer, CC_SHA1_DIGEST_LENGTH))
-                {
-                    printf("[ERROR] Hashes do not match!\n");
-                    exit(1);
-                }
-                printf("Successfully decrypted %ld bytes!\n", processedSize);
-                
-                // everything is ok, so write that file!
-                // last 20 bytes of the decrypted file are the SHA1 hash so we don't write them
-                [fm createFileAtPath:[NSString stringWithFormat:@"%@.decrypted",targetFileName] 
-                            contents:[NSData dataWithBytesNoCopy:outData length:noHashDataSize]
-                          attributes:nil];
-            }
-            else
-            {
-                printf("Failed to decrypt! Wrong key or type?\n");
-                return 1;
-            }
-        }
-        // ENCRYPT IT !!!!!
-        else if (operation == OP_ENCRYPT)
-        {
-            // we will need to add the SHA1 hash so we increase size of input data
-            inDataSize = [inData length];
-            NSUInteger inDataPlusHashSize = [inData length]+CC_SHA1_DIGEST_LENGTH;
-            // output buffer for CCCrypt()
-            outDataSize = inDataPlusHashSize + kCCBlockSizeAES128;
-            outData = calloc(1, outDataSize);
-
-            // we need to hash the original unencrypted data
+            // verify if original SHA1 hash is ok
+            // last 20 bytes of the decrypted file are the SHA1 hash
+            NSUInteger noHashDataSize = processedSize-CC_SHA1_DIGEST_LENGTH;
             unsigned char hashBuffer[CC_SHA1_DIGEST_LENGTH+1];
-            CC_SHA1([inData bytes], (CC_LONG)inDataSize, hashBuffer);
+            
+            NSData *originalHash = [NSData dataWithBytes:outData+noHashDataSize length:CC_SHA1_DIGEST_LENGTH];
+            // hash the decrypted data minus the SHA1 hash
+            CC_SHA1(outData, (CC_LONG)noHashDataSize, hashBuffer);
 #if DEBUG
             for (int i = 0; i < CC_SHA1_DIGEST_LENGTH; i++)
             {
@@ -244,38 +208,162 @@ int main (int argc, char * argv[])
             }
             printf("\n");
 #endif
-
-            // now we need to join the buffers
-            unsigned char *bufferToEncrypt = malloc(inDataPlusHashSize);
-            memcpy(bufferToEncrypt, [inData bytes], inDataSize);
-            memcpy(bufferToEncrypt+inDataSize, hashBuffer, CC_SHA1_DIGEST_LENGTH);
-            
-            CCCryptorStatus ret = CCCrypt(kCCEncrypt,             // op
-                                          kCCAlgorithmAES128,     // alg
-                                          kCCOptionPKCS7Padding,  // options
-                                          key,                    // key
-                                          kCCKeySizeAES128,       // keyLength
-                                          NULL,                   // iv
-                                          bufferToEncrypt,        // dataIn
-                                          inDataPlusHashSize,     // dataInLength
-                                          outData,                // dataOut
-                                          outDataSize,            // dataOutAvailable
-                                          &processedSize);        // dataOutMoved
-
-            if (processedSize > 0 && ret == kCCSuccess)
+            // verify if original hash and our computed hash match
+            if (memcmp([originalHash bytes], hashBuffer, CC_SHA1_DIGEST_LENGTH))
             {
-                printf("Successfully encrypted %ld bytes!\n", processedSize);
+                printf("[ERROR] Hashes do not match!\n");
+                exit(1);
+            }
+            printf("Successfully decrypted %ld bytes!\n", processedSize);
+            
+            // everything is ok, so write that file!
+            // last 20 bytes of the decrypted file are the SHA1 hash so we don't write them
+            [fm createFileAtPath:[NSString stringWithFormat:@"%@.decrypted",targetFileName] 
+                        contents:[NSData dataWithBytesNoCopy:outData length:noHashDataSize]
+                      attributes:nil];
+
+        }
+        // ENCRYPT CONFIG FILE
+        else if (type == T_CONFIG && operation == OP_ENCRYPT)
+        {
+            // we will need to add the SHA1 hash so we increase size of input data
+            NSUInteger inDataPlusHashSize = inDataSize+CC_SHA1_DIGEST_LENGTH;
+            // output buffer for CCCrypt()
+            outDataSize = inDataPlusHashSize + kCCBlockSizeAES128;
+            outData = calloc(1, outDataSize);
+            
+            // we need to hash the original unencrypted data
+            unsigned char hashBuffer[CC_SHA1_DIGEST_LENGTH+1];
+            CC_SHA1(inData, (CC_LONG)inDataSize, hashBuffer);
+#if DEBUG
+            for (int i = 0; i < CC_SHA1_DIGEST_LENGTH; i++)
+            {
+                printf("%02hhx", hashBuffer[i]);
+            }
+            printf("\n");
+#endif
+            // add the SHA1 hash to the input buffer, enough size was already allocated at the beginning
+            memcpy(inData+inDataSize, hashBuffer, CC_SHA1_DIGEST_LENGTH);
+            // crypt data
+            processedSize = crypt_operation(kCCEncrypt, inData, inDataPlusHashSize, outData, outDataSize, key, kCCOptionPKCS7Padding);
+            
+            printf("Successfully encrypted %ld bytes!\n", processedSize);
+            
+            [fm createFileAtPath:[NSString stringWithFormat:@"%@.encrypted",targetFileName] 
+                        contents:[NSData dataWithBytesNoCopy:outData length:processedSize]
+                      attributes:nil];
+        }
+        // WE JUST WANT TO DECRYPT LOG FILES
+        else if (type == T_LOG)
+        {
+            // log files are composed by a header plus data
+            // the record format is int(size)+data
+            
+            // create a folder for each log file where we will dump the decrypted data
+            NSString *folderName = [targetFileName substringWithRange:(NSRange){0, [targetFileName length]-strlen(LOG_EXTENSION)}];
+            
+            if ([fm fileExistsAtPath:folderName] == NO)
+            {
+                [fm createDirectoryAtPath:folderName 
+              withIntermediateDirectories:NO
+                               attributes:nil
+                                    error:NULL];
+            }
+            // start reading the buffer and decrypting it
+            size_t count = 0;
+            uint32_t recordSize = 0;
+            uint32_t index = 0;
+#if DEBUG
+            printf("[DEBUG] Decrypting %s\n", [targetFileName UTF8String]);
+#endif
+
+            for (count = 0; count < inDataSize ; count += recordSize+sizeof(uint32_t))
+            {
+                // first field is the record size
+                recordSize = *(uint32_t*)inData;
                 
-                [fm createFileAtPath:[NSString stringWithFormat:@"%@.encrypted",targetFileName] 
+                // must be a multiple of kCCBlockSizeAES128
+                // if remainder == 0 we pass no padding option to CCCrypt()
+                // NOTE:
+                // there's maybe a bug in here because in the header correct, the size seems to be always padded
+                // while at data records the size is incorrect if there's padding (we must manually add it)
+                uint16_t remainder = recordSize % kCCBlockSizeAES128;
+                if (remainder != 0)
+                    recordSize += (kCCBlockSizeAES128 - remainder);
+
+                // output buffer for CCCrypt()
+                outDataSize = recordSize + kCCBlockSizeAES128; // out data size, add the block size
+                outData = NULL;
+                outData = calloc(1, outDataSize);
+                if (outData == NULL)
+                {
+                    fprintf(stderr, "[ERROR] Alloc of outData failed!\n");
+                    exit(1);
+                }
+                
+                processedSize = crypt_operation(kCCDecrypt, 
+                                                (void*)(inData+4), 
+                                                recordSize,
+                                                outData,
+                                                outDataSize,
+                                                key, 
+                                                remainder == 0 ? 0 : kCCOptionPKCS7Padding);
+
+                // quick detection of jpeg files
+                char *extension = calloc(1, 20);
+                if (*(uint16_t*)(outData+2) == 0xE0FF && *(uint32_t*)(outData+6) == 0x4649464A)
+                    strcpy(extension, "jpeg");
+                else
+                    strcpy(extension, "decrypted");
+                
+                // dump the decrypted file into the folder
+                [fm createFileAtPath:[NSString stringWithFormat:@"%@/%d-%d.%s", folderName, index++,recordSize, extension] 
                             contents:[NSData dataWithBytesNoCopy:outData length:processedSize]
                           attributes:nil];
-            }
-            else
-            {
-                printf("Failed to encrypt!\n");
+
+                // advance to next record
+                inData += recordSize+sizeof(uint32_t);
             }
         }
+        
     }
     return 0;
 }
+
+/*
+ * just a wrapper function for CCCrypt() that will encrypt or decrypt data
+ * and return the number of processed bytes
+ * it will exit application if CCCrypt() fails
+ */
+size_t
+crypt_operation(CCOperation op, 
+                void *inData, 
+                size_t inDataSize, 
+                void *outData, 
+                size_t outDataSize,
+                char *key,
+                CCOptions options)
+{
+    size_t processedSize = 0;
+
+    CCCryptorStatus ret = CCCrypt(op,                     // op
+                                  kCCAlgorithmAES128,     // alg
+                                  options,                // options
+                                  key,                    // key
+                                  kCCKeySizeAES128,       // keyLength
+                                  NULL,                   // iv
+                                  inData,                 // dataIn
+                                  inDataSize,             // dataInLength
+                                  outData,                // dataOut
+                                  outDataSize,            // dataOutAvailable
+                                  &processedSize);        // dataOutMoved
+
+    if (ret != kCCSuccess || processedSize == 0)
+    {
+        fprintf(stderr, "Failed to decrypt! Wrong key or type? [Ret code:%d]\n", ret);
+        exit(1);
+    }
+    return processedSize;
+}
+
 

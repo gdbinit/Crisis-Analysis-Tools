@@ -10,15 +10,17 @@
  `------'`--'  `--'  `--'     `------'  `--'   `--'  `--' `--' 
  
 Crisis configuration, log files and stolen data decryptor and cryptor
-v0.2
+v0.3
 
 (c) fG!, 2012 - reverser@put.as - http://reverse.put.as
 All rights reserved.
 
-A command line util to decrypt and encrypt OS.X/Crisis config, log and data files.
+A command line util to decrypt and encrypt OS.X/Crisis config, and decrypt the data log files.
 
-For now only the config files are working.
 Output will use the same name as input and add the extensions .decrypted or .encrypted.
+
+If target is a data log file, a folder will be created with the filename minus ".gai" extension, and 
+data extracted to that folder.
 
 The encrypted files are correctly hashed so they can be used to play with OS.X/Crisis :-)
 
@@ -30,7 +32,7 @@ target - target binary to encrypt or decrypt
 and options:
 -c: encrypt
 -d: decrypt
--t <type>: target type, 0-config, 1-log, 2-data
+-t <type>: target type, 0-config, 1-log
 
 
 Sample usage to decrypt the configuration file:
@@ -47,3 +49,18 @@ Successfully decrypted 2449 bytes!
 
 Enjoy,
 fG!
+
+Sample usage to decrypt data log file:
+$ ./enigma krfhIqFjqIqxUojRQU8RxH6Fqq.gai -d -t 1
+ _____     _               
+|   __|___|_|___ _____ ___ 
+|   __|   | | . |     | .'|
+|_____|_|_|_|_  |_|_|_|__,|
+            |___|          
+                       v0.3
+              (c) fG!, 2012
+
+[DEBUG] Decrypting krfhIqFjqIqxUojRQU8RxH6Fqq.gai
+
+$ ls krfhIqFjqIqxUojRQU8RxH6Fqq
+0-160.decrypted 1-5504.jpeg
