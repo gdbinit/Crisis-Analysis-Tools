@@ -52,6 +52,8 @@
 #define T_CONFIG 0
 #define T_LOG    1
 
+#define RECORD_SIZE_FIELD_LENGTH     4
+
 #define LOG_EXTENSION ".gai"
 
 #define VERSION "0.3"
@@ -273,15 +275,20 @@ int main (int argc, char * argv[])
             size_t count = 0;
             uint32_t recordSize = 0;
             uint32_t index = 0;
-#if DEBUG
-            printf("[DEBUG] Decrypting %s\n", [targetFileName UTF8String]);
-#endif
 
-            for (count = 0; count < inDataSize ; count += recordSize+sizeof(uint32_t))
+            printf("Decrypting and extracting contents of %s\n", [targetFileName UTF8String]);
+
+            for (count = 0; count < inDataSize ; count += recordSize + RECORD_SIZE_FIELD_LENGTH)
             {
+                printf("Processing record #%d\n", index);
                 // first field is the record size
                 recordSize = *(uint32_t*)inData;
-                
+                // verify if recordSize is sane versus the remaining available data
+                if (recordSize > (inDataSize-count-RECORD_SIZE_FIELD_LENGTH))
+                {
+                    fprintf(stderr, "[ERROR] Record size bigger than file size! Something is wrong :-)\n");
+                    exit(1);
+                }
                 // must be a multiple of kCCBlockSizeAES128
                 // if remainder == 0 we pass no padding option to CCCrypt()
                 // NOTE:
@@ -301,8 +308,11 @@ int main (int argc, char * argv[])
                     exit(1);
                 }
                 
+                // advance buffer to start of crypted data
+                inData += RECORD_SIZE_FIELD_LENGTH;
+                
                 processedSize = crypt_operation(kCCDecrypt, 
-                                                (void*)(inData+4), 
+                                                (void*)inData, 
                                                 recordSize,
                                                 outData,
                                                 outDataSize,
@@ -310,7 +320,7 @@ int main (int argc, char * argv[])
                                                 remainder == 0 ? 0 : kCCOptionPKCS7Padding);
 
                 // quick detection of jpeg files
-                char *extension = calloc(1, 20);
+                char *extension = calloc(1, 15);
                 if (*(uint16_t*)(outData+2) == 0xE0FF && *(uint32_t*)(outData+6) == 0x4649464A)
                     strcpy(extension, "jpeg");
                 else
@@ -320,12 +330,13 @@ int main (int argc, char * argv[])
                 [fm createFileAtPath:[NSString stringWithFormat:@"%@/%d-%d.%s", folderName, index++,recordSize, extension] 
                             contents:[NSData dataWithBytesNoCopy:outData length:processedSize]
                           attributes:nil];
-
+                
+                printf("Successfully decrypted %ld bytes!\n", processedSize);
+                
                 // advance to next record
-                inData += recordSize+sizeof(uint32_t);
+                inData += recordSize;
             }
         }
-        
     }
     return 0;
 }
@@ -360,7 +371,7 @@ crypt_operation(CCOperation op,
 
     if (ret != kCCSuccess || processedSize == 0)
     {
-        fprintf(stderr, "Failed to decrypt! Wrong key or type? [Ret code:%d]\n", ret);
+        fprintf(stderr, "[ERROR] Failed to decrypt! Wrong key or type? [Ret code:%d]\n", ret);
         exit(1);
     }
     return processedSize;
