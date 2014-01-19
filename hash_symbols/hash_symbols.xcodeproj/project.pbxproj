@@ -27,6 +27,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		7B5DD7D5188C910E00BC5B06 /* logging.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = logging.h; sourceTree = "<group>"; };
 		DEAED94315D1CBF300347A93 /* hash_symbols */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = hash_symbols; sourceTree = BUILT_PRODUCTS_DIR; };
 		DEAED94715D1CBF300347A93 /* main.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = main.c; sourceTree = "<group>"; };
 		DEAED95015D1D5EE00347A93 /* process.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = process.c; sourceTree = "<group>"; };
@@ -82,6 +83,7 @@
 				DEAED95D15D27AF900347A93 /* hashing.c */,
 				DEAED95E15D27AF900347A93 /* hashing.h */,
 				DEAED95C15D1DA5100347A93 /* structures.h */,
+				7B5DD7D5188C910E00BC5B06 /* logging.h */,
 			);
 			path = hash_symbols;
 			sourceTree = "<group>";
@@ -196,6 +198,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -204,6 +207,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
@@ -227,6 +231,7 @@
 				DEAED94F15D1CBF300347A93 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};

@@ -12,7 +12,7 @@
  * /_______  / ____|__|_|  /___  /\____/|____/____  >
  *         \/\/          \/    \/                 \/ 
  *
- * (c) 2012, fG! - reverser@put.as - http://reverse.put.as
+ * (c) 2012, 2013, 2014 fG! - reverser@put.as - http://reverse.put.as
  *
  * -> You are free to use this code as long as you keep the original copyright <-
  *
@@ -32,32 +32,20 @@
  *
  */
 
-#include <stdlib.h>
-
 #include "mach_o.h"
-#include "structures.h"
+
+#include <stdlib.h>
 #include <stdio.h>
 #include <mach-o/loader.h>
 #include <mach-o/fat.h>
 #include <string.h>
 
+#include "structures.h"
+
 struct header_info 
 process_macho_header(uint8_t **targetBuffer)
 {
-    struct header_info temp_headerinfo;
-    temp_headerinfo.is64Bits            = 0;
-    temp_headerinfo.linkedit_fileoff    = 0;
-    temp_headerinfo.linkedit_vmaddr     = 0;
-    temp_headerinfo.symtab_nsyms        = 0;
-    temp_headerinfo.symtab_stroff       = 0;
-    temp_headerinfo.symtab_strsize      = 0;
-    temp_headerinfo.symtab_symoff       = 0;
-    temp_headerinfo.dysymtab_iextdefsym = 0;
-    temp_headerinfo.dysymtab_iundefsym  = 0;
-    temp_headerinfo.dysymtab_nextdefsym = 0;
-    temp_headerinfo.dysymtab_nundefsym  = 0;
-    temp_headerinfo.textSegmentIndex    = 0;
-
+    struct header_info temp_headerinfo = {0};
     uint8_t *address    = *targetBuffer;    
     uint32_t nrLoadCmds = 0;
     uint32_t indexCounter = 1; // ignore PAGEZERO

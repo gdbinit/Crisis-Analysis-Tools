@@ -12,7 +12,7 @@
  * /_______  / ____|__|_|  /___  /\____/|____/____  >
  *         \/\/          \/    \/                 \/ 
  *
- * (c) 2012, fG! - reverser@put.as - http://reverse.put.as
+ * (c) 2012, 2013, 2014 fG! - reverser@put.as - http://reverse.put.as
  *
  * -> You are free to use this code as long as you keep the original copyright <-
  *

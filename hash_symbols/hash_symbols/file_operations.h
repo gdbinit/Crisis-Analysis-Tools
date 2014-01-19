@@ -12,7 +12,7 @@
  * /_______  / ____|__|_|  /___  /\____/|____/____  >
  *         \/\/          \/    \/                 \/ 
  *
- * (c) 2012, fG! - reverser@put.as - http://reverse.put.as
+ * (c) 2012, 2013, 2014 fG! - reverser@put.as - http://reverse.put.as
  *
  * -> You are free to use this code as long as you keep the original copyright <-
  *
@@ -35,8 +35,6 @@
 #ifndef hash_symbols_file_operations_c
 #define hash_symbols_file_operations_c
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <stdint.h>
 
 uint32_t read_target(uint8_t **targetBuffer, const char *target);

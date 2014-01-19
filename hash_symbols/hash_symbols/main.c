@@ -11,9 +11,9 @@
  *  /        \___  |  Y Y  \ \_\ (  <_> )  |__\___ \ 
  * /_______  / ____|__|_|  /___  /\____/|____/____  >
  *         \/\/          \/    \/                 \/ 
- * v0.1
+ * v0.2
  *
- * (c) 2012, fG! - reverser@put.as - http://reverse.put.as
+ * (c) 2012, 2013, 2014 fG! - reverser@put.as - http://reverse.put.as
  *
  * A command line util to hash external symbols from a given Mach-O binary or library
  *

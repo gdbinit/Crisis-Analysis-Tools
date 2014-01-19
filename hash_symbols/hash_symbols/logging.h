@@ -1,16 +1,16 @@
 /*
- *   ___ ___               .__                       
- *  /   |   \_____    _____|  |__                    
- * /    ~    \__  \  /  ___/  |  \                   
- * \    Y    // __ \_\___ \|   Y  \                  
- *  \___|_  /(____  /____  >___|  /                  
- *        \/      \/     \/     \/                   
- *   _________            ___.          .__          
+ *   ___ ___               .__
+ *  /   |   \_____    _____|  |__
+ * /    ~    \__  \  /  ___/  |  \
+ * \    Y    // __ \_\___ \|   Y  \
+ *  \___|_  /(____  /____  >___|  /
+ *        \/      \/     \/     \/
+ *   _________            ___.          .__
  *  /   _____/__.__. _____\_ |__   ____ |  |   ______
  *  \_____  <   |  |/     \| __ \ /  _ \|  |  /  ___/
- *  /        \___  |  Y Y  \ \_\ (  <_> )  |__\___ \ 
+ *  /        \___  |  Y Y  \ \_\ (  <_> )  |__\___ \
  * /_______  / ____|__|_|  /___  /\____/|____/____  >
- *         \/\/          \/    \/                 \/ 
+ *         \/\/          \/    \/                 \/
  *
  * (c) 2012, 2013, 2014 fG! - reverser@put.as - http://reverse.put.as
  *
@@ -28,14 +28,19 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * mach_o.h
+ * structures.h
  *
  */
-#ifndef hash_symbols_mach_o_c
-#define hash_symbols_mach_o_c
 
-#include <stdint.h>
+#ifndef hash_symbols_logging_h
+#define hash_symbols_logging_h
 
-struct header_info process_macho_header(uint8_t **targetBuffer);
+#if DEBUG == 0
+#define DEBUG_MSG(fmt, ...) do {} while (0)
+#else
+#define DEBUG_MSG(fmt, ...) printf("[DEBUG] " fmt " (%s, %d, %s)\n", ## __VA_ARGS__, __func__, __LINE__, __FILE__)
+#endif
+
+#define ERROR_MSG(fmt, ...) fprintf(stderr, "[ERROR] " fmt " (%s, %d, %s)\n", ## __VA_ARGS__, __func__, __LINE__, __FILE__)
 
 #endif
