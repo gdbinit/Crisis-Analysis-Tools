@@ -37,6 +37,7 @@
 
 #include <stdint.h>
 
-uint32_t read_target(uint8_t **targetBuffer, const char *target);
+int read_target(const char *path, uint8_t **buffer, int64_t *size);
+
 
 #endif

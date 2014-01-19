@@ -42,6 +42,7 @@
 #include "structures.h"
 #include "mach_o.h"
 #include "hashing.h"
+#include "logging.h"
 
 extern options_t options;
 

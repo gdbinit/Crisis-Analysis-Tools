@@ -38,6 +38,7 @@
 #include <string.h>
 
 #include "structures.h"
+#include "logging.h"
 
 /*
  * the hashing algorithm, modify it to suit your needs

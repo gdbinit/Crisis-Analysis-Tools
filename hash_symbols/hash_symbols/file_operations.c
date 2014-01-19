@@ -36,51 +36,42 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <string.h>
+#include <errno.h>
 
 #include "structures.h"
+#include "logging.h"
 
 /*
  * read the target file into a buffer
  */
-uint32_t 
-read_target(uint8_t **targetBuffer, const char *target)
+int
+read_target(const char *path, uint8_t **buffer, int64_t *size)
 {
-    FILE *in_file;
-	
-    in_file = fopen(target, "r");
-    if (!in_file)
+    int fd = open(path, O_RDONLY);
+    if (fd < 0)
     {
-		printf("[ERROR] Could not open target file %s!\n", target);
-        exit(1);
+        ERROR_MSG("Can't open target file %s: %s.", path, strerror(errno));
+        return -1;
     }
-    if (fseek(in_file, 0, SEEK_END))
+    struct stat statbuf = {0};
+    if (fstat(fd, &statbuf) < 0)
     {
-		printf("[ERROR] Fseek failed at %s\n", target);
-        exit(1);
+        ERROR_MSG("Can't fstat target file %s: %s.", path, strerror(errno));
+        return -1;
     }
-    
-    uint32_t fileSize = (uint32_t)ftell(in_file);
-    
-    if (fseek(in_file, 0, SEEK_SET))
+    *buffer = mmap(0, statbuf.st_size, PROT_READ, MAP_SHARED, fd, 0);
+    if (*buffer == MAP_FAILED)
     {
-		printf("[ERROR] Fseek failed at %s\n", target);
-        exit(1);
+        ERROR_MSG("mmap failed on target file %s: %s.", path, strerror(errno));
+        return -1;
     }
-    
-    *targetBuffer = malloc(fileSize);
-    if (*targetBuffer == NULL) 
-    { 
-        printf("[ERROR] Malloc failed! Exiting...\n"); 
-        exit(1); 
-    }
-    
-    fread(*targetBuffer, fileSize, 1, in_file);
-	if (ferror(in_file))
-	{
-		printf("[ERROR] fread failed at %s\n", target);
-        free(*targetBuffer);
-		exit(1);
-	}
-    fclose(in_file);  
-    return(fileSize);
+    *size = statbuf.st_size;
+    /* we can close the file descriptor */
+    close(fd);
+    return 0;
 }

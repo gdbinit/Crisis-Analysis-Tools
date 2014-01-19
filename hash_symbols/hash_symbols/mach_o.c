@@ -41,6 +41,7 @@
 #include <string.h>
 
 #include "structures.h"
+#include "logging.h"
 
 struct header_info 
 process_macho_header(uint8_t **targetBuffer)

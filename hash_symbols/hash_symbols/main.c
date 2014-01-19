@@ -46,10 +46,12 @@
 #include <getopt.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <sys/mman.h>
 
 #include "file_operations.h"
 #include "process.h"
 #include "structures.h"
+#include "logging.h"
 
 #define VERSION "0.1"
 
@@ -166,10 +168,10 @@ int main (int argc, char *argv[])
     }
     
     // read the target into our buffer
-    uint8_t *targetBuffer   = NULL;
-    uint32_t fileSize       = 0;
-    fileSize = read_target(&targetBuffer, (argv+optind)[0]);
+    uint8_t *targetBuffer = NULL;
+    int64_t fileSize = 0;
     options.targetName = (argv+optind)[0];
+    fileSize = read_target(options.targetName, &targetBuffer, &fileSize);
     
     // verify if it's a valid mach-o target
     uint8_t isFat = 0;
@@ -202,7 +204,7 @@ int main (int argc, char *argv[])
         process_nonfat_binary(&targetBuffer);
     }
     
-    free(targetBuffer);
+    munmap(targetBuffer, fileSize);
     return 0;
 }
 
