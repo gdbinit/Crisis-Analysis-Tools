@@ -38,13 +38,16 @@
 #include <mach-o/nlist.h>
 #include <arpa/inet.h>
 #include <string.h>
+#include <libgen.h>
+#include <sys/param.h>
+#include <errno.h>
 
 #include "structures.h"
 #include "mach_o.h"
 #include "hashing.h"
 #include "logging.h"
 
-extern options_t options;
+extern struct options g_options;
 
 /*
  * process fat archives
@@ -52,30 +55,31 @@ extern options_t options;
  * process non-fat binaries
  */
 void
-process_fat_binary(uint8_t **targetBuffer)
+process_fat_binary(uint8_t *targetBuffer)
 {
     // we need to read fat headers and get the location of each binary inside it
     // don't forget that fat headers are always big-endian :-)
-    uint8_t *address = *targetBuffer;
     uint32_t nrFatArch  = 0;
     
     // retrieve the number of binaries inside the fat archive
-    struct fat_header *fatheader_ptr = (struct fat_header *)address;
+    struct fat_header *fatheader_ptr = (struct fat_header *)targetBuffer;
     nrFatArch = ntohl(fatheader_ptr->nfat_arch);
     // pointer to the first fat_arch structure
-    struct fat_arch *fatArch = (struct fat_arch*)(address + sizeof(struct fat_header));
+    struct fat_arch *fatArch = (struct fat_arch*)(targetBuffer + sizeof(struct fat_header));
     
     // if arch is set find the selected arch
-    if (options.arch)
+    if (g_options.arch)
     {
+        DEBUG_MSG("Processing the selected architecture inside the fat binary...");
         // find the correct architecture
         for (uint32_t i = 0; i < nrFatArch; i++)
         {
             // for ARM we need to match cpusubtype!
-            if (ntohl(fatArch->cputype) == options.arch || ntohl(fatArch->cpusubtype) == options.arch)
+            if (ntohl(fatArch->cputype) == g_options.arch ||
+                ntohl(fatArch->cpusubtype) == g_options.arch)
             {
-                uint8_t *location = address + ntohl(fatArch->offset);
-                process_nonfat_binary(&location);
+                uint8_t *location = targetBuffer + ntohl(fatArch->offset);
+                process_nonfat_binary(location);
                 break;
             }
             fatArch++;
@@ -84,18 +88,20 @@ process_fat_binary(uint8_t **targetBuffer)
     // else iterate thru all fat_archs and process those binaries
     else
     {
+        DEBUG_MSG("Processing all architectures inside the fat binary...");
         for (uint32_t i = 0; i < nrFatArch; i++)
         {
-            uint8_t *location = address + ntohl(fatArch->offset);
+            uint8_t *location = targetBuffer + ntohl(fatArch->offset);
             // skip over not support ppc
-            if (ntohl(fatArch->cputype) == CPU_TYPE_POWERPC || ntohl(fatArch->cputype) == CPU_TYPE_POWERPC64)
+            if (ntohl(fatArch->cputype) == CPU_TYPE_POWERPC ||
+                ntohl(fatArch->cputype) == CPU_TYPE_POWERPC64)
+            {
                 continue;
-            
-            process_nonfat_binary(&location);
+            }
+            process_nonfat_binary(location);
             fatArch++;
         }
     }
-    
 }
 
 /*
@@ -104,10 +110,19 @@ process_fat_binary(uint8_t **targetBuffer)
  *
  */
 void
-process_nonfat_binary(uint8_t **targetBuffer)
+process_nonfat_binary(uint8_t *targetBuffer)
 {
-    uint8_t *address = *targetBuffer;
-    struct header_info header_info;
+    uint32_t magic = *(uint32_t*)targetBuffer;
+    switch (magic)
+    {
+        case MH_MAGIC:
+        case MH_MAGIC_64:
+            break;
+        default:
+            ERROR_MSG("Invalid target binary!");
+            return;
+    }
+    struct header_info header_info = {0};
     // read header information
     header_info = process_macho_header(targetBuffer);
     // process it
@@ -117,60 +132,47 @@ process_nonfat_binary(uint8_t **targetBuffer)
     // generate hash if we want to find a specific symbol
     uint32_t symbolToMatchHash = 0;
     FILE *outputFile = NULL;
-    if (options.symbol != NULL)
+    if (g_options.symbol != NULL)
     {
-        symbolToMatchHash = FNV1A_Hash_Jesteress(options.symbol, strlen(options.symbol));
+        symbolToMatchHash = FNV1A_Hash_Jesteress(g_options.symbol, strlen(g_options.symbol));
     }
     else
     {
-        // open file to write if no specific symbol is specified
-        char *extension = ".symbols_hash.";
-        uint32_t extensionSize = (uint32_t)strlen(extension);
-        uint32_t cpuStringSize = (uint32_t)strlen(header_info.cpuString);
-        char *outputExtensionName = malloc(extensionSize + cpuStringSize + 1);
-        
-        sprintf(outputExtensionName, "%s%s", extension, header_info.cpuString);
-        outputExtensionName[extensionSize + cpuStringSize] = '\0';
-        
-        uint32_t outputNameSize = 0;
-        char *outputName = NULL;
-        if (options.outputFolder != NULL)
+        char outputName[MAXPATHLEN] = {0};
+        if (g_options.outputFile == NULL)
         {
-            outputNameSize = (uint32_t)strlen(outputExtensionName) + (uint32_t)strlen(options.targetName) + (uint32_t)options.outputFolder + 2; // we are adding the /
-            outputName = malloc(outputNameSize);
-            sprintf(outputName, "%s/%s%s", options.outputFolder, options.targetName, outputExtensionName);
-            
+            snprintf(outputName, MAXPATHLEN, "%s_%s_hashes.txt", basename(g_options.targetName), header_info.cpuString);
+            outputName[MAXPATHLEN-1] = '\0';
         }
         else
         {
-            outputNameSize = (uint32_t)strlen(outputExtensionName) + (uint32_t)strlen(options.targetName) + 1;
-            outputName = malloc(outputNameSize);
-            sprintf(outputName, "%s%s", options.targetName, outputExtensionName);
-            
+            strlcpy(outputName, g_options.outputFile, MAXPATHLEN);
         }
-        outputName[outputNameSize-1] = '\0';
-        
+
         // open the file to write, finally!
+        DEBUG_MSG("Output file is %s.", outputName);
         outputFile = fopen(outputName, "w+");
-        free(outputExtensionName);
-        free(outputName);
+        if (outputFile == NULL)
+        {
+            ERROR_MSG("Failed to open target file for writing: %s.", strerror(errno));
+            return;
+        }
     }
     
     // start the fun!
     if (header_info.is64Bits)
     {
-        nlist64 = (struct nlist_64*)(address + header_info.symtab_symoff);
         char *symbolString = NULL;
-
+        nlist64 = (struct nlist_64*)(targetBuffer + header_info.symtab_symoff);
         for (uint32_t x = 0; x < header_info.symtab_nsyms; x++)
         {
             uint8_t isSymbolExternal = nlist64->n_type & N_EXT;
             uint8_t isSymbolDefined  = (nlist64->n_type & N_TYPE) == N_SECT ? 1 : 0;
             // we want to extract symbols from __TEXT segment so we use the index previously found
             // when processing the mach-o header
-            if (isSymbolExternal && isSymbolDefined && nlist64->n_sect == header_info.textSegmentIndex)
+            if (isSymbolExternal && isSymbolDefined)// && nlist64->n_sect == header_info.textSegmentIndex)
             {
-                symbolString = ((char*)address + header_info.symtab_stroff+nlist64->n_un.n_strx);
+                symbolString = (char*)(targetBuffer + header_info.symtab_stroff+nlist64->n_un.n_strx);
                 if (symbolToMatchHash != 0)
                 {
                     uint32_t currentSymbolHash = FNV1A_Hash_Jesteress(symbolString, strlen(symbolString));
@@ -187,7 +189,7 @@ process_nonfat_binary(uint8_t **targetBuffer)
     }
     else
     {
-        nlist = (struct nlist*)(address + header_info.symtab_symoff);
+        nlist = (struct nlist*)(targetBuffer + header_info.symtab_symoff);
         char *symbolString = NULL;
         
         for (uint32_t x = 0; x < header_info.symtab_nsyms; x++)
@@ -202,7 +204,7 @@ process_nonfat_binary(uint8_t **targetBuffer)
             
             if (isSymbolExternal && isSymbolDefined && nlist->n_sect == header_info.textSegmentIndex)
             {
-                symbolString = ((char*)address + header_info.symtab_stroff+nlist->n_un.n_strx);
+                symbolString = (char*)(targetBuffer + header_info.symtab_stroff+nlist->n_un.n_strx);
                 if (symbolToMatchHash != 0)
                 {
                     uint32_t currentSymbolHash = FNV1A_Hash_Jesteress(symbolString, strlen(symbolString));
@@ -218,7 +220,9 @@ process_nonfat_binary(uint8_t **targetBuffer)
         }
     }
     // close file handle
-    if (options.symbol == NULL)
+    if (g_options.symbol == NULL)
+    {
         fclose(outputFile);
+    }
 }
 

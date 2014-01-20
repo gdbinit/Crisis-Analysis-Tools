@@ -38,9 +38,9 @@
 #if DEBUG == 0
 #define DEBUG_MSG(fmt, ...) do {} while (0)
 #else
-#define DEBUG_MSG(fmt, ...) printf("[DEBUG] " fmt " (%s, %d, %s)\n", ## __VA_ARGS__, __func__, __LINE__, __FILE__)
+#define DEBUG_MSG(fmt, ...) printf("[DEBUG] " fmt " (%s, %d)\n", ## __VA_ARGS__, __func__, __LINE__)
 #endif
 
-#define ERROR_MSG(fmt, ...) fprintf(stderr, "[ERROR] " fmt " (%s, %d, %s)\n", ## __VA_ARGS__, __func__, __LINE__, __FILE__)
+#define ERROR_MSG(fmt, ...) fprintf(stderr, "[ERROR] " fmt " (%s, %d)\n", ## __VA_ARGS__, __func__, __LINE__)
 
 #endif

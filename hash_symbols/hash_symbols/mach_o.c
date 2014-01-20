@@ -44,10 +44,10 @@
 #include "logging.h"
 
 struct header_info 
-process_macho_header(uint8_t **targetBuffer)
+process_macho_header(uint8_t *targetBuffer)
 {
     struct header_info temp_headerinfo = {0};
-    uint8_t *address    = *targetBuffer;    
+    uint8_t *address    = targetBuffer;
     uint32_t nrLoadCmds = 0;
     uint32_t indexCounter = 1; // ignore PAGEZERO
 

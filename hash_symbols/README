@@ -10,9 +10,9 @@
   /        \___  |  Y Y  \ \_\ (  <_> )  |__\___ \ 
  /_______  / ____|__|_|  /___  /\____/|____/____  >
          \/\/          \/    \/                 \/ 
- v0.1
+ v0.2
  
-(c) 2012, fG! - reverser@put.as - http://reverse.put.as
+(c) 2012, 2013, 2014, fG! - reverser@put.as - http://reverse.put.as
  
 This is a command line util to hash the exported symbol names of a given Mach-O binary or library.
 
@@ -21,10 +21,10 @@ The default hash is the one used by OS.X/Crisis malware.
 
 It is able to process non-fat and fat binaries. For now it supports x86, x86_64, ARM binaries.
 
-By default it will write a text file with format "symbol_name,hash", which can be used by the
+By default it will write a text file with format "target_name_arch_hashex.txt", which can be used by the
 IDC scripts available at https://github.com/gdbinit/Crisis-Analysis-Tools.
 
-The output folder by default is the current directory and can be modified with the -o option.
+The output folder is the current directory.
 If target is a fat binary you can extract only a single arch using the -a option.
 
 It's also possible to hash a single symbol by using the -s option. Don't forget you need to input

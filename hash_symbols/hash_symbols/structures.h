@@ -68,12 +68,9 @@ enum archs
 struct options
 {
     enum archs arch;
-    char    *outputFolder;
+    char    *outputFile;
     char    *symbol;
     char    *targetName;
 };
-
-typedef struct options options_t;
-
 
 #endif

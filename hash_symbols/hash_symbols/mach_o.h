@@ -36,6 +36,6 @@
 
 #include <stdint.h>
 
-struct header_info process_macho_header(uint8_t **targetBuffer);
+struct header_info process_macho_header(uint8_t *targetBuffer);
 
 #endif

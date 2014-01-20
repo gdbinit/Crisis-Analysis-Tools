@@ -39,7 +39,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-void process_nonfat_binary(uint8_t **targetBuffer);
-void process_fat_binary(uint8_t **targetBuffer);
+void process_nonfat_binary(uint8_t *targetBuffer);
+void process_fat_binary(uint8_t *targetBuffer);
 
 #endif

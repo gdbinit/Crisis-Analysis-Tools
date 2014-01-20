@@ -53,12 +53,11 @@
 #include "structures.h"
 #include "logging.h"
 
-#define VERSION "0.1"
+#define VERSION "0.2"
 
 static void help(const char *exe);
-static void init_options(options_t *options);
 
-options_t options;
+struct options g_options;
 
 static void
 help(const char *exe)
@@ -72,15 +71,7 @@ help(const char *exe)
     printf("-a: specific target architecture to hash symbols from if target is a fat archive\n");
     printf("    valid options are i386, x86_64, armv6, armv7\n");
     printf("-s: specific symbol name to hash\n");
-    printf("-o: output folder, default is current path\n");
-}
-
-static void 
-init_options(options_t *options)
-{
-    options->arch = 0;
-    options->outputFolder = NULL;
-    options->symbol = NULL;
+    printf("-o: output file, default is target_arch_hashes.txt. Requires -a option.\n");
 }
 
 int main (int argc, char *argv[])
@@ -92,7 +83,7 @@ int main (int argc, char *argv[])
     printf("                           |___|                    \n");
     printf(".------------------------------------------------.\n");
     printf("|             Hash Symbols - v%s                |\n", VERSION);
-    printf("|        (c) fG!, 2012 - reverser@put.as         |\n");
+    printf("|        (c) fG!, 2014 - reverser@put.as         |\n");
     printf("`------------------------------------------------´\n");
 
     // required structure for long options
@@ -106,7 +97,6 @@ int main (int argc, char *argv[])
 	int option_index = 0;
     int c = 0;
     
-    init_options(&options);
     const char *myProgramName = argv[0];
 
     // process command line options
@@ -123,13 +113,13 @@ int main (int argc, char *argv[])
             case 'a':
             {
                 if (strcmp(optarg, "i386") == 0)
-                    options.arch = X86;
+                    g_options.arch = X86;
                 else if (strcmp(optarg, "x86_64") == 0)
-                    options.arch = X86_64;
+                    g_options.arch = X86_64;
                 else if (strcmp(optarg, "armv6") == 0)
-                    options.arch = ARMV6;
+                    g_options.arch = ARMV6;
                 else if (strcmp(optarg, "armv7") == 0)
-                    options.arch = ARMV7;
+                    g_options.arch = ARMV7;
                 else
                 {
                     help(myProgramName);
@@ -138,10 +128,10 @@ int main (int argc, char *argv[])
                 break;
             }
             case 's':
-                options.symbol = optarg;
+                g_options.symbol = optarg;
                 break;
             case 'o':
-                options.outputFolder = optarg;
+                g_options.outputFile = optarg;
                 break;
 			default:
 				help(myProgramName);
@@ -152,56 +142,56 @@ int main (int argc, char *argv[])
     // switches are set but there's no target configured
     if ((argv+optind)[0] == NULL)
     {
-        fprintf(stderr, "*******************************\n");
-        fprintf(stderr, "[ERROR] Target binary required!\n");
-        fprintf(stderr, "*******************************\n");
+        ERROR_MSG("Target binary required!");
         help(myProgramName);
         exit(1);
     }
     
-    // test if output folder exists
-    struct stat s;
-    if (options.outputFolder != NULL && stat(options.outputFolder, &s) != 0)
+    if (g_options.outputFile != NULL && g_options.arch == 0)
     {
-        fprintf(stderr, "[ERROR] Output folder does not exist!\n");
+        ERROR_MSG("Please specify an architecture!");
+        help(myProgramName);
         exit(1);
     }
-    
-    // read the target into our buffer
+    // mmap the target binary
     uint8_t *targetBuffer = NULL;
     int64_t fileSize = 0;
-    options.targetName = (argv+optind)[0];
-    fileSize = read_target(options.targetName, &targetBuffer, &fileSize);
+    g_options.targetName = (argv+optind)[0];
+    if ( read_target(g_options.targetName, &targetBuffer, &fileSize) < 0 )
+    {
+        ERROR_MSG("Failed to read target file!");
+        exit(1);
+    }
     
     // verify if it's a valid mach-o target
     uint8_t isFat = 0;
     uint32_t magic = *(uint32_t*)(targetBuffer);
-    
-    if (magic == FAT_CIGAM)
-        isFat = 1;
-    else if (magic == MH_MAGIC || magic == MH_MAGIC_64)
-        isFat = 0;
-    else if (magic == MH_CIGAM || magic == MH_CIGAM_64)
+    switch (magic)
     {
-        printf("[ERROR] Target is not supported!\n");
-        exit(1);
-    }
-    else
-    {
-		printf("[ERROR] Target is not a valid Mach-O binary!\n");
-        exit(1);
+        case FAT_CIGAM:
+            isFat = 1;
+            break;
+        case MH_MAGIC:
+        case MH_MAGIC_64:
+            break;
+        default:
+            ERROR_MSG("Target is not supported or not a valid Mach-O binary!");
+            munmap(targetBuffer, fileSize);
+            exit(1);
     }
     
     // if it's a fat binary we will extract the symbols from all available archs if user
     // hasn't selected a specific arch
     if (isFat)
     {
-        process_fat_binary(&targetBuffer);
+        DEBUG_MSG("Processing fat binary...");
+        process_fat_binary(targetBuffer);
     }
     // else our work is so much simpler!
     else
     {
-        process_nonfat_binary(&targetBuffer);
+        DEBUG_MSG("Processing non-fat binary...");
+        process_nonfat_binary(targetBuffer);
     }
     
     munmap(targetBuffer, fileSize);
